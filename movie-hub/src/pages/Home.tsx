@@ -11,9 +11,9 @@ const stops = [
 ]
 
 const fallbackMovies = [
-  { title: 'The Moonlit Garden', meta: 'Fantasy · 1h 48m', color: 'sage' },
-  { title: 'A Very Good Heist', meta: 'Comedy · 2h 04m', color: 'coral' },
-  { title: 'Paper Planets', meta: 'Adventure · 1h 56m', color: 'blue' },
+  { title: 'The Odyssey', meta: 'Epic · 2h 50m', color: 'sage' },
+  { title: 'Spider-Man: Brand New Day', meta: 'Action · 2h 15m', color: 'coral' },
+  { title: 'F1', meta: 'Drama · 2h 10m', color: 'blue' },
 ]
 
 function supportsWebGL(): boolean {

@@ -1,8 +1,8 @@
 import { Outlines } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { RefObject } from 'react'
-import { CanvasTexture, Group, SRGBColorSpace } from 'three'
+import { CanvasTexture, Group, SRGBColorSpace, TextureLoader, Texture } from 'three'
 
 type LobbySceneProps = {
   activeStop: number
@@ -158,37 +158,106 @@ function Room() {
   )
 }
 
-function Poster({ position, title, tint }: { position: [number, number, number]; title: string; tint: string }) {
+// ---------------------------------------------------------------------------
+// Movie posters with real images
+// ---------------------------------------------------------------------------
+
+const posterMovies = [
+  {
+    title: 'The Odyssey',
+    meta: 'Epic · 2h 50m',
+    url: 'https://m.media-amazon.com/images/I/71qQXdOmSPL._AC_UF1000,1000_QL80_.jpg',
+    fallbackColor: '#3a4a6b',
+  },
+  {
+    title: 'Spider-Man: Brand New Day',
+    meta: 'Action · 2h 15m',
+    url: 'https://i.scdn.co/image/ab67616d0000b2733b4123d5765f3068a788fa30',
+    fallbackColor: '#b02020',
+  },
+  {
+    title: 'F1',
+    meta: 'Drama · 2h 10m',
+    url: 'https://thumb.wikimedia.org/wikipedia/en/thumb/3/38/F1_%282025_film%29.png/250px-F1_%282025_film%29.png',
+    fallbackColor: '#1a1a1a',
+  },
+] as const
+
+/** Load a remote image as a Three.js texture with CORS. Falls back to null on error. */
+function useRemoteTexture(url: string): Texture | null {
+  const [texture, setTexture] = useState<Texture | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    const loader = new TextureLoader()
+    loader.crossOrigin = 'anonymous'
+    loader.load(
+      url,
+      (tex) => {
+        if (!alive) return
+        tex.colorSpace = SRGBColorSpace
+        setTexture(tex)
+      },
+      undefined,
+      () => {
+        // CORS or 404 — silently fall back to the tint color
+      },
+    )
+    return () => {
+      alive = false
+    }
+  }, [url])
+
+  // Dispose on unmount
+  useEffect(() => () => { texture?.dispose() }, [texture])
+
+  return texture
+}
+
+function MoviePoster({
+  position,
+  title,
+  imageUrl,
+  fallbackColor,
+}: {
+  position: [number, number, number]
+  title: string
+  imageUrl: string
+  fallbackColor: string
+}) {
+  const tex = useRemoteTexture(imageUrl)
+
   return (
     <group position={position}>
+      {/* Wooden frame */}
       <mesh castShadow>
         <boxGeometry args={[1.85, 2.55, 0.14]} />
         <meshToonMaterial color="#573f36" />
         <Outline />
       </mesh>
-      <mesh position={[0, 0, 0.09]}>
+
+      {/* Poster face — shows the real image once loaded, tint colour until then */}
+      <mesh position={[0, 0, 0.08]}>
         <planeGeometry args={[1.58, 2.27]} />
-        <meshToonMaterial color="#f5ebd6" />
+        {tex ? (
+          <meshBasicMaterial map={tex} />
+        ) : (
+          <meshToonMaterial color={fallbackColor} />
+        )}
       </mesh>
-      <mesh position={[0, 0.2, 0.11]}>
-        {/* Reduced circle segments: 16 is plenty for this radius */}
-        <circleGeometry args={[0.48, 16]} />
-        <meshToonMaterial color={tint} />
+
+      {/* Title label strip at the bottom */}
+      <mesh position={[0, -1.02, 0.09]}>
+        <boxGeometry args={[1.58, 0.32, 0.01]} />
+        <meshBasicMaterial color="rgba(0,0,0,0.55)" transparent opacity={0.7} />
       </mesh>
-      <mesh position={[0, 0.2, 0.13]}>
-        {/* Torus segments: 6,18 → 6,12 */}
-        <torusGeometry args={[0.31, 0.035, 6, 12]} />
-        <meshToonMaterial color="#f5ebd6" />
-      </mesh>
-      <mesh position={[-0.32, 0.2, 0.13]} rotation={[0, 0, -0.5]}>
-        <boxGeometry args={[0.11, 0.68, 0.04]} />
-        <meshToonMaterial color="#e7b973" />
-      </mesh>
-      <CanvasLabel text={title.toUpperCase()} position={[0, -0.64, 0.14]} size={[1.5, 0.25]} fontSize={72} />
-      <mesh position={[0, -0.88, 0.14]}>
-        <boxGeometry args={[0.82, 0.035, 0.015]} />
-        <meshBasicMaterial color={tint} />
-      </mesh>
+      <CanvasLabel
+        text={title.toUpperCase()}
+        position={[0, -1.02, 0.1]}
+        size={[1.55, 0.3]}
+        color="#ffffff"
+        fontSize={60}
+      />
     </group>
   )
 }
@@ -197,9 +266,15 @@ function PosterWall() {
   return (
     <group>
       <CanvasLabel text="NOW SHOWING" position={[0, 4.35, -7.77]} size={[3.6, 0.55]} fontSize={90} />
-      <Poster position={[-4.5, 2.55, -7.72]} title="Moonlit Garden" tint="#809879" />
-      <Poster position={[-1.5, 2.55, -7.72]} title="A Good Heist" tint="#d56d51" />
-      <Poster position={[1.5, 2.55, -7.72]} title="Paper Planets" tint="#738d9a" />
+      {posterMovies.map((movie, i) => (
+        <MoviePoster
+          key={movie.title}
+          position={[(-4.5 + i * 3) as number, 2.55, -7.72]}
+          title={movie.title}
+          imageUrl={movie.url}
+          fallbackColor={movie.fallbackColor}
+        />
+      ))}
     </group>
   )
 }
