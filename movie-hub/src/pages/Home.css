@@ -120,67 +120,7 @@
   line-height: 1;
 }
 
-.lobby-stop-nav {
-  position: absolute;
-  z-index: 4;
-  left: 50%;
-  bottom: 37px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 7px 13px;
-  border: 1px solid rgba(40, 38, 32, 0.26);
-  border-radius: 30px;
-  background: rgba(245, 236, 219, 0.9);
-  box-shadow: 0 5px 20px rgba(64, 51, 39, 0.09);
-  transform: translateX(-50%);
-}
-
-.lobby-stop-nav button {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  color: var(--lobby-ink);
-  background: transparent;
-  cursor: pointer;
-}
-
-.lobby-stop-nav button:hover {
-  background: rgba(207, 97, 72, 0.12);
-}
-
-.lobby-stop-nav .stop-arrow {
-  font-size: 18px;
-}
-
-.lobby-stop-nav .stop-dot {
-  width: 30px;
-  height: 30px;
-  border: 1px solid rgba(40, 38, 32, 0.23);
-  font-size: 9px;
-  font-weight: 700;
-}
-
-.lobby-stop-nav .stop-dot.is-active {
-  border-color: var(--lobby-accent);
-  color: #fff8ec;
-  background: var(--lobby-accent);
-}
-
-.lobby-hint {
-  position: absolute;
-  z-index: 2;
-  right: clamp(20px, 5vw, 70px);
-  bottom: 45px;
-  margin: 0;
-  color: #49453d;
-  font-size: 10px;
-  text-shadow: 0 1px 8px #f5ecdb;
-}
+/* nav dots removed */
 
 .lobby-loading {
   position: absolute;
@@ -320,22 +260,7 @@
   }
 
   .lobby-scene-caption {
-    bottom: 102px;
-  }
-
-  .lobby-scene-caption strong {
-    font-size: 32px;
-  }
-
-  .lobby-stop-nav {
-    bottom: 20px;
-    gap: 7px;
-  }
-
-  .lobby-hint {
-    right: 16px;
-    bottom: 31px;
-    font-size: 8px;
+    bottom: 24px;
   }
 
   .lobby-list-view {
@@ -372,10 +297,6 @@
 
   .lobby-header {
     grid-template-columns: 1fr 1fr;
-  }
-
-  .lobby-hint {
-    display: none;
   }
 }
 

@@ -10,15 +10,25 @@ type LobbySceneProps = {
 }
 
 const cameraPositions = [
-  [0, 4.2, 12],
-  [-0.7, 4.2, 7.2],
-  [2.5, 3.5, 6.3],
+  // 0 — Now Showing: back from the poster wall, slightly elevated, centred
+  [0, 3.8, -1.5],
+  // 1 — Tickets: standing in front of ticket counter (counter is at [-5.55, 0, -1.6])
+  [-2.8, 3.2, 0.8],
+  // 2 — Popcorn: standing in front of popcorn stand (stand is at [5.2, 0, -2.1])
+  [2.4, 3.2, 0.4],
+  // 3 — Screens door: pulled back from corner, looking at door (door at [4.25, 0, -7.55])
+  [0.5, 3.5, -4.2],
 ] as const
 
 const cameraTargets = [
-  [0, 2.3, -2.1],
-  [-0.2, 2.4, -7.2],
-  [4, 2.1, -7.3],
+  // 0 — Looking straight at the poster wall
+  [0, 2.8, -7.7],
+  // 1 — Looking at the ticket counter face
+  [-5.2, 2.1, -1.6],
+  // 2 — Looking at the popcorn stand
+  [5.2, 2.4, -2.1],
+  // 3 — Looking at the screens door
+  [4.25, 1.9, -7.55],
 ] as const
 
 // Reusable popcorn positions — defined outside component to avoid re-creation

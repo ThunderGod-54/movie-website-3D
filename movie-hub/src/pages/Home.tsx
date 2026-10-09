@@ -5,9 +5,10 @@ import LobbyScene from '../components/three/LobbyScene'
 import './Home.css'
 
 const stops = [
-  { name: 'Entrance', short: '01' },
-  { name: 'Now showing', short: '02' },
-  { name: 'Screening room', short: '03' },
+  { name: 'Now showing' },
+  { name: 'Tickets' },
+  { name: 'Popcorn' },
+  { name: 'Screens' },
 ]
 
 const fallbackMovies = [
@@ -135,23 +136,6 @@ function Home() {
               <span className="caption-overline">TAKE A LOOK AROUND</span>
               <strong>{stops[activeStop].name}</strong>
             </div>
-            <nav className="lobby-stop-nav" aria-label="Lobby viewpoints">
-              <button type="button" className="stop-arrow" onClick={() => moveStop(-1)} aria-label="Previous viewpoint">←</button>
-              {stops.map((stop, index) => (
-                <button
-                  className={`stop-dot ${index === activeStop ? 'is-active' : ''}`}
-                  type="button"
-                  key={stop.name}
-                  onClick={() => setActiveStop(index)}
-                  aria-label={`View ${stop.name}`}
-                  aria-current={index === activeStop ? 'step' : undefined}
-                >
-                  <span>{stop.short}</span>
-                </button>
-              ))}
-              <button type="button" className="stop-arrow" onClick={() => moveStop(1)} aria-label="Next viewpoint">→</button>
-            </nav>
-            <p className="lobby-hint">Scroll or swipe to wander</p>
           </>
         )}
       </div>
