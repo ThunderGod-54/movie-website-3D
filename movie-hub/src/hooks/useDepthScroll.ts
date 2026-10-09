@@ -15,7 +15,7 @@ import type { RefObject } from 'react'
  * Native scrolling is never intercepted.
  */
 
-const SMOOTHING = 5.5 // higher = snappier catch-up (≈95% settled in 0.55s)
+const SMOOTHING = 8.5 // snappier catch-up on desktop (settles in ≈0.28s)
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
@@ -40,7 +40,6 @@ export function useDepthScroll(rootRef: RefObject<HTMLElement | null>) {
 		if (!root) return
 
 		const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
-		// CSS falls back to the resting state when the variables are absent.
 		if (reduceMotion.matches) return
 
 		const hero = root.querySelector<HTMLElement>('.landing-hero')
@@ -57,6 +56,7 @@ export function useDepthScroll(rootRef: RefObject<HTMLElement | null>) {
 		let target = current
 		let raf = 0
 		let lastTime = 0
+		let resizeRaf = 0
 
 		const measure = () => {
 			vh = window.innerHeight
@@ -67,9 +67,13 @@ export function useDepthScroll(rootRef: RefObject<HTMLElement | null>) {
 
 		const apply = (scroll: number) => {
 			const heroP = clamp01(scroll / heroSpan)
-			if (Math.abs(heroP - lastHeroP) > 0.0005) {
+			// Threshold of 0.004 (sub-pixel accuracy) avoids redundant style recalculation
+			if (Math.abs(heroP - lastHeroP) > 0.004) {
 				lastHeroP = heroP
-				root.style.setProperty('--hero-p', heroP.toFixed(4))
+				// Scope --hero-p strictly to the hero element to avoid whole-document style recalculation
+				if (hero) {
+					hero.style.setProperty('--hero-p', heroP.toFixed(3))
+				}
 			}
 
 			rows.forEach((row, i) => {
@@ -89,9 +93,9 @@ export function useDepthScroll(rootRef: RefObject<HTMLElement | null>) {
 					e = easeOutCubic(raw)
 				}
 
-				if (Math.abs(e - lastRowE[i]) > 0.0005) {
+				if (Math.abs(e - lastRowE[i]) > 0.004) {
 					lastRowE[i] = e
-					row.style.setProperty('--row-e', e.toFixed(4))
+					row.style.setProperty('--row-e', e.toFixed(3))
 				}
 			})
 		}
@@ -100,7 +104,7 @@ export function useDepthScroll(rootRef: RefObject<HTMLElement | null>) {
 			const dt = Math.min(0.05, (now - lastTime) / 1000)
 			lastTime = now
 			current += (target - current) * (1 - Math.exp(-dt * SMOOTHING))
-			if (Math.abs(target - current) < 0.1) current = target
+			if (Math.abs(target - current) < 0.2) current = target
 			apply(current)
 			raf = current === target ? 0 : requestAnimationFrame(tick)
 		}
@@ -124,20 +128,39 @@ export function useDepthScroll(rootRef: RefObject<HTMLElement | null>) {
 			wake()
 		}
 
+		const debouncedResize = () => {
+			if (resizeRaf) cancelAnimationFrame(resizeRaf)
+			resizeRaf = requestAnimationFrame(onResize)
+		}
+
+		const onMotionChange = () => {
+			if (reduceMotion.matches) {
+				if (raf) cancelAnimationFrame(raf)
+				if (hero) hero.style.removeProperty('--hero-p')
+				rows.forEach((r) => r.style.removeProperty('--row-e'))
+			} else {
+				measure()
+				apply(window.scrollY)
+			}
+		}
+
 		measure()
 		apply(current)
 
 		window.addEventListener('scroll', onScroll, { passive: true })
-		window.addEventListener('resize', onResize)
+		window.addEventListener('resize', debouncedResize)
+		reduceMotion.addEventListener('change', onMotionChange)
 		// Fonts loading / layout shifts change page height without a window resize.
-		const observer = new ResizeObserver(onResize)
+		const observer = new ResizeObserver(debouncedResize)
 		observer.observe(root)
 
 		return () => {
 			window.removeEventListener('scroll', onScroll)
-			window.removeEventListener('resize', onResize)
+			window.removeEventListener('resize', debouncedResize)
+			reduceMotion.removeEventListener('change', onMotionChange)
 			observer.disconnect()
 			if (raf) cancelAnimationFrame(raf)
+			if (resizeRaf) cancelAnimationFrame(resizeRaf)
 		}
 	}, [rootRef])
 }

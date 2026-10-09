@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import LobbyScene from '../components/three/LobbyScene'
 import './Home.css'
@@ -26,17 +26,13 @@ function supportsWebGL(): boolean {
 }
 
 function Home() {
-  const [webglAvailable, setWebglAvailable] = useState<boolean | null>(null)
+  const [webglAvailable] = useState<boolean>(() => supportsWebGL())
   const [activeStop, setActiveStop] = useState(0)
   const [showList, setShowList] = useState(false)
   const pointerRef = useRef({ x: 0, y: 0 })
   const gestureStartRef = useRef<number | null>(null)
   // Debounce wheel so rapid scrolls don't skip multiple stops at once
   const wheelCooldownRef = useRef(false)
-
-  useEffect(() => {
-    setWebglAvailable(supportsWebGL())
-  }, [])
 
   function moveStop(direction: number) {
     setActiveStop((current) => (current + direction + stops.length) % stops.length)

@@ -1,6 +1,6 @@
 import { Outlines } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import type { RefObject } from 'react'
 import { CanvasTexture, Group, SRGBColorSpace } from 'three'
 
