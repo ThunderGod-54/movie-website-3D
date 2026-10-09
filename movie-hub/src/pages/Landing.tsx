@@ -1,5 +1,8 @@
+import { useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { useDepthScroll } from '../hooks/useDepthScroll'
 import './Landing.css'
+import './LandingMotion.css'
 
 type DoodleKind = 'popcorn' | 'ticket' | 'reel' | 'camera' | 'seat' | 'projector'
 
@@ -75,8 +78,11 @@ function PosterRow({ row, reverse = false }: { row: number; reverse?: boolean })
 }
 
 function Landing() {
+	const pageRef = useRef<HTMLDivElement>(null)
+	useDepthScroll(pageRef)
+
 	return (
-		<div className="landing-page">
+		<div className="landing-page" ref={pageRef}>
 			<header className="landing-header">
 				<Link className="wordmark" to="/" aria-label="Goodshow home">
 					<svg viewBox="0 0 42 42" aria-hidden="true">
