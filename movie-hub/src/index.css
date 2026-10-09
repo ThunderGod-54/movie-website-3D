@@ -1,5 +1,10 @@
 :root {
-  font-family: 'DM Sans', sans-serif;
+  --ink: #26231f;
+  --paper: #f7f4eb;
+  --accent: #d65a3a;
+  --hand: 'Caveat', cursive;
+  --body: 'DM Sans', sans-serif;
+  font-family: var(--body);
   color: #23211e;
   background: #f7f4eb;
   font-synthesis: none;
