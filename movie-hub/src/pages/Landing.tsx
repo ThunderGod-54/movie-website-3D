@@ -2,12 +2,10 @@ import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { MoviePosterBurst } from '../components/MoviePosterBurst'
 import { SignInModal } from '../components/SignInModal'
-import { useScrollActivation } from '../hooks/useDepthScroll'
 import './Landing.css'
 import './LandingMotion.css'
 
 function Landing() {
-  const isActivated = useScrollActivation()
   const [isSignInOpen, setIsSignInOpen] = useState(false)
   const [signInOriginRect, setSignInOriginRect] = useState<DOMRect | null>(null)
   const signInBtnRef = useRef<HTMLButtonElement>(null)
@@ -25,7 +23,7 @@ function Landing() {
   }
 
   return (
-    <div className={`landing-page ${isActivated ? 'is-activated' : 'is-initial'}`}>
+    <div className="landing-page">
       <header className="landing-header">
         <Link className="wordmark" to="/" aria-label="Goodshow home">
           <svg viewBox="0 0 42 42" aria-hidden="true">
@@ -34,7 +32,7 @@ function Landing() {
           <span>goodshow</span>
         </Link>
 
-        {/* Navigation items: About → Sign In → Enter Theater (post-scroll) */}
+        {/* Navigation items: About → Sign In → Enter Theater */}
         <div className="landing-header-actions">
           <a className="about-link" href="#about">About <span aria-hidden="true">↗</span></a>
 
@@ -51,10 +49,9 @@ function Landing() {
           </button>
 
           <Link
-            className={`header-enter-btn ${isActivated ? 'is-visible' : ''}`}
+            className="header-enter-btn is-visible"
             to="/lobby"
             aria-label="Enter the theatre"
-            tabIndex={isActivated ? 0 : -1}
           >
             <span>Enter theatre</span>
             <span aria-hidden="true">↗</span>
@@ -63,8 +60,11 @@ function Landing() {
       </header>
 
       <main className="landing-main">
+        {/* Soft translucent backdrop to ensure hero text & CTA remain distinct and readable */}
+        <div className="landing-hero-backdrop" aria-hidden="true" />
+
         <section
-          className={`landing-hero ${isActivated ? 'is-scrolling' : ''}`}
+          className="landing-hero"
           aria-labelledby="landing-title"
         >
           <p className="eyebrow">YOUR NEIGHBOURHOOD PICTURE HOUSE</p>
@@ -74,16 +74,13 @@ function Landing() {
             <span>Enter the theatre</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" /></svg>
           </Link>
-          <div className="hero-scroll-hint" aria-hidden="true">
-            <span>Scroll to explore</span>
-            <span className="scroll-hint-arrow">↓</span>
-          </div>
         </section>
 
-        <MoviePosterBurst isActivated={isActivated} isModalOpen={isSignInOpen} />
+        {/* Continuous background animation running right from page load */}
+        <MoviePosterBurst isModalOpen={isSignInOpen} />
       </main>
 
-      <footer className={`landing-footer ${isActivated ? 'is-ambient' : ''}`} id="about">
+      <footer className="landing-footer" id="about">
         <p>Made for nights worth remembering</p>
         <small>A little movie magic, just for you.</small>
       </footer>

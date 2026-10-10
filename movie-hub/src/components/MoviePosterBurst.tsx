@@ -3,7 +3,7 @@ import { moviePosters } from './three/moviePosters'
 import './MoviePosterBurst.css'
 
 interface MoviePosterBurstProps {
-  isActivated: boolean
+  isActivated?: boolean
   isModalOpen?: boolean
 }
 
@@ -17,13 +17,34 @@ const config = {
   fadeOut: 0.1,
 }
 
-export function MoviePosterBurst({ isActivated, isModalOpen = false }: MoviePosterBurstProps) {
+const posterLayout = [
+  [-0.42, -0.28],
+  [0.42, -0.28],
+  [-0.36, -0.06],
+  [0.36, -0.06],
+  [-0.42, 0.2],
+  [0.42, 0.2],
+  [-0.34, 0.4],
+  [0.34, 0.4],
+  [-0.46, 0.02],
+  [0.46, 0.02],
+  [-0.38, 0.32],
+  [0.38, -0.36],
+]
+
+export function MoviePosterBurst({ isModalOpen = false }: MoviePosterBurstProps) {
   const sceneRef = useRef<HTMLDivElement>(null)
   const posterRefs = useRef<(HTMLDivElement | null)[]>([])
   const touchYRef = useRef(0)
   const targetZRef = useRef(0)
   const currentZRef = useRef(0)
   const isReducedMotionRef = useRef(false)
+  const isModalOpenRef = useRef(isModalOpen)
+  const winWidthRef = useRef(typeof window !== 'undefined' ? window.innerWidth : 1440)
+  const winHeightRef = useRef(typeof window !== 'undefined' ? window.innerHeight : 900)
+
+  // Keep isModalOpenRef synchronized without restarting animations
+  isModalOpenRef.current = isModalOpen
 
   useEffect(() => {
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -34,6 +55,8 @@ export function MoviePosterBurst({ isActivated, isModalOpen = false }: MoviePost
     }
 
     const updateScene = () => {
+      winWidthRef.current = window.innerWidth
+      winHeightRef.current = window.innerHeight
       if (sceneRef.current) {
         sceneRef.current.style.perspective = window.innerWidth <= 768 ? '720px' : '980px'
       }
@@ -47,31 +70,19 @@ export function MoviePosterBurst({ isActivated, isModalOpen = false }: MoviePost
     let previousTime = performance.now()
 
     const animate = (now: number) => {
-      const deltaTime = Math.min(0.05, (now - previousTime) / 1000)
+      const deltaTime = Math.min(0.04, (now - previousTime) / 1000)
       previousTime = now
 
-      if (isActivated && !isModalOpen && !isReducedMotionRef.current) {
+      // Animation runs continuously at normal speed even when Sign In modal is open
+      if (!isReducedMotionRef.current) {
         targetZRef.current += config.autoSpeed * deltaTime
       }
 
       currentZRef.current += (targetZRef.current - currentZRef.current) * config.smoothing
       const currentZ = currentZRef.current
       const posterCount = moviePosters.length
-      
-      const posterLayout = [
-        [-0.42, -0.28],
-        [0.42, -0.28],
-        [-0.36, -0.06],
-        [0.36, -0.06],
-        [-0.42, 0.2],
-        [0.42, 0.2],
-        [-0.34, 0.4],
-        [0.34, 0.4],
-        [-0.46, 0.02],
-        [0.46, 0.02],
-        [-0.38, 0.32],
-        [0.38, -0.36],
-      ]
+      const w = winWidthRef.current
+      const h = winHeightRef.current
 
       for (let i = 0; i < posterCount; i++) {
         const poster = posterRefs.current[i]
@@ -95,7 +106,7 @@ export function MoviePosterBurst({ isActivated, isModalOpen = false }: MoviePost
         const drift = Math.sin(progress * Math.PI * 2 + i) * 24
         const rotation = Math.sin(progress * Math.PI * 2 + i * 2) * 5
         
-        poster.style.transform = `translate3d(${(window.innerWidth * xRatio + drift).toFixed(1)}px, ${(window.innerHeight * yRatio).toFixed(1)}px, ${z.toFixed(1)}px) translate(-50%, -50%) scale(0.9) rotate(${rotation.toFixed(1)}deg)`
+        poster.style.transform = `translate3d(${(w * xRatio + drift).toFixed(1)}px, ${(h * yRatio).toFixed(1)}px, ${z.toFixed(1)}px) translate(-50%, -50%) scale(0.9) rotate(${rotation.toFixed(1)}deg)`
         poster.style.opacity = opacity.toFixed(3)
       }
 
@@ -109,13 +120,13 @@ export function MoviePosterBurst({ isActivated, isModalOpen = false }: MoviePost
       motionQuery.removeEventListener('change', handleMotionChange)
       window.removeEventListener('resize', updateScene)
     }
-  }, [isActivated, isModalOpen])
+  }, [])
 
   useEffect(() => {
-    if (!isActivated) return
-
     const handleWheel = (event: WheelEvent) => {
-      if (!isModalOpen) targetZRef.current += event.deltaY * config.speed
+      if (!isModalOpenRef.current) {
+        targetZRef.current += event.deltaY * config.speed
+      }
     }
 
     const handleTouchStart = (event: TouchEvent) => {
@@ -123,7 +134,7 @@ export function MoviePosterBurst({ isActivated, isModalOpen = false }: MoviePost
     }
 
     const handleTouchMove = (event: TouchEvent) => {
-      if (isModalOpen || event.touches.length === 0) return
+      if (isModalOpenRef.current || event.touches.length === 0) return
       const nextY = event.touches[0].clientY
       targetZRef.current += (touchYRef.current - nextY) * config.speed * 1.5
       touchYRef.current = nextY
@@ -138,12 +149,12 @@ export function MoviePosterBurst({ isActivated, isModalOpen = false }: MoviePost
       window.removeEventListener('touchstart', handleTouchStart)
       window.removeEventListener('touchmove', handleTouchMove)
     }
-  }, [isActivated, isModalOpen])
+  }, [])
 
   return (
     <div
-      className={`movie-poster-burst ${isActivated ? 'is-active' : ''}`}
-      aria-hidden={!isActivated}
+      className="movie-poster-burst is-active"
+      aria-hidden="true"
     >
       <div className="movie-poster-scene" ref={sceneRef} aria-label="Movie poster background">
         <div className="movie-poster-flight" aria-hidden="true">

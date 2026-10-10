@@ -7,8 +7,8 @@
   height: 100svh;
   overflow: hidden;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 1;
+  transition: opacity 0.5s ease;
 }
 
 .movie-poster-burst.is-active {
@@ -42,12 +42,13 @@
   overflow: hidden;
   border: 1px solid rgba(237, 214, 168, 0.72);
   border-radius: 5px;
-  box-shadow: 0 12px 30px rgba(15, 12, 18, 0.38);
+  box-shadow: 0 8px 20px rgba(15, 12, 18, 0.22);
   transform-style: preserve-3d;
   will-change: transform, opacity;
   backface-visibility: hidden;
   pointer-events: none;
   cursor: default;
+  contain: layout paint;
 }
 
 /* Larger movie banners — scaled to ~75% of previous rendered size */
