@@ -2,6 +2,7 @@ import { Outlines } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { RefObject } from 'react'
+import * as THREE from 'three'
 import { CanvasTexture, Group, SRGBColorSpace, TextureLoader, Texture } from 'three'
 
 type LobbySceneProps = {
@@ -14,10 +15,10 @@ const cameraPositions = [
   [0, 4.2, 12],
   // 1 — Now Showing: back from the poster wall, slightly elevated, centred
   [0, 3.8, -1.5],
-  // 2 — Tickets: standing in front of ticket counter (counter is at [-5.55, 0, -1.6])
-  [-2.8, 3.2, 0.8],
-  // 3 — Popcorn: standing in front of popcorn stand (stand is at [5.2, 0, -2.1])
-  [2.4, 3.2, 0.4],
+  // 2 — Tickets: very close, tight on the counter
+  [-3.8, 1.9, 1.4],
+  // 3 — Food Court: very close, tight on the counter
+  [2.8, 1.9, 1.4],
   // 4 — Screens door: pulled back from corner, looking at door (door at [4.25, 0, -7.55])
   [0.5, 3.5, -4.2],
 ] as const
@@ -27,21 +28,16 @@ const cameraTargets = [
   [0, 2.3, -2.1],
   // 1 — Looking straight at the poster wall
   [0, 2.8, -7.7],
-  // 2 — Looking at the ticket counter face
-  [-5.2, 2.1, -1.6],
-  // 3 — Looking at the popcorn stand
-  [5.2, 2.4, -2.1],
+  // 2 — Tickets: look straight at the counter sign face, mid-height
+  [-5.55, 2.4, -1.6],
+  // 3 — Food Court: look straight at the menu board and counter face
+  [4.8, 2.4, -1.8],
   // 4 — Looking at the screens door
   [4.25, 1.9, -7.55],
 ] as const
 
-// Reusable popcorn positions — defined outside component to avoid re-creation
-const popcornPositions = [
-  [-0.45, 3.18, 0],
-  [-0.15, 3.33, 0.1],
-  [0.18, 3.19, -0.05],
-  [0.45, 3.28, 0.08],
-] as const
+// popcornPositions no longer used after food court replacement — keep for reference
+// const popcornPositions removed
 
 // Reel spoke angles — computed once
 const reelAngles = Array.from({ length: 5 }, (_, i) => (i / 5) * Math.PI * 2)
@@ -293,52 +289,301 @@ function PosterWall() {
   )
 }
 
+// ---------------------------------------------------------------------------
+// Ticket Counter — redesigned: clean modern box-office desk
+// Palette: charcoal body · off-white surfaces · accent terracotta sign only
+// ---------------------------------------------------------------------------
 function TicketCounter() {
   return (
     <group position={[-5.55, 0, -1.6]}>
-      <mesh position={[0, 1.05, 0]} castShadow>
-        <boxGeometry args={[3.2, 1.55, 1.25]} />
-        <meshToonMaterial color="#7b5241" />
+
+      {/* ── Main desk body — dark charcoal ── */}
+      <mesh position={[0, 0.88, 0]} castShadow receiveShadow>
+        <boxGeometry args={[3.6, 1.76, 1.1]} />
+        <meshToonMaterial color="#2a2724" />
         <Outline />
       </mesh>
-      <mesh position={[0, 1.86, 0]} castShadow>
-        <boxGeometry args={[3.4, 0.18, 1.4]} />
-        <meshToonMaterial color="#e6c28c" />
+
+      {/* ── Counter top — light stone ── */}
+      <mesh position={[0, 1.78, 0]} castShadow>
+        <boxGeometry args={[3.7, 0.07, 1.2]} />
+        <meshToonMaterial color="#d8d2c8" />
         <Outline />
       </mesh>
-      <mesh position={[0, 2.45, -0.42]}>
-        <boxGeometry args={[2.3, 0.78, 0.13]} />
-        <meshToonMaterial color="#d76b51" />
+
+      {/* ── Glass sneeze-guard panel ── */}
+      <mesh position={[0, 2.32, 0.42]}>
+        <boxGeometry args={[3.5, 1.0, 0.04]} />
+        <meshToonMaterial color="#c8d8dc" transparent />
+      </mesh>
+      {/* Guard frame — thin top rail */}
+      <mesh position={[0, 2.84, 0.42]}>
+        <boxGeometry args={[3.55, 0.05, 0.06]} />
+        <meshToonMaterial color="#3a3734" />
         <Outline />
       </mesh>
-      <CanvasLabel text="TICKETS" position={[0, 2.45, -0.32]} size={[2.1, 0.54]} color="#fff5df" fontSize={138} />
-      <CanvasLabel text="BOX OFFICE" position={[0, 0.25, 0.65]} size={[2.2, 0.4]} color="#f4dfbc" fontSize={92} />
+      {/* Guard frame — two vertical side rails */}
+      {[-1.75, 1.75].map((x, i) => (
+        <mesh key={i} position={[x, 2.32, 0.42]}>
+          <boxGeometry args={[0.05, 1.0, 0.06]} />
+          <meshToonMaterial color="#3a3734" />
+        </mesh>
+      ))}
+      {/* Speak-through gap — centre divider post */}
+      <mesh position={[0, 2.32, 0.42]}>
+        <boxGeometry args={[0.05, 1.0, 0.06]} />
+        <meshToonMaterial color="#3a3734" />
+      </mesh>
+
+      {/* ── Digital display screen on desk ── */}
+      <mesh position={[0, 2.05, 0.1]} rotation={[-0.18, 0, 0]} castShadow>
+        <boxGeometry args={[1.6, 0.38, 0.05]} />
+        <meshToonMaterial color="#1c1a18" />
+        <Outline />
+      </mesh>
+      <CanvasLabel
+        text="NEXT AVAILABLE"
+        position={[0, 2.05, 0.13]}
+        size={[1.52, 0.32]}
+        color="#e8f4f8"
+        fontSize={72}
+      />
+
+      {/* ── Overhead sign board ── */}
+      <mesh position={[0, 3.6, -0.3]} castShadow>
+        <boxGeometry args={[3.2, 0.72, 0.1]} />
+        <meshToonMaterial color="#1c1a18" />
+        <Outline />
+      </mesh>
+      <mesh position={[0, 3.6, -0.24]}>
+        <planeGeometry args={[3.0, 0.52]} />
+        <meshToonMaterial color="#242220" />
+      </mesh>
+      <CanvasLabel
+        text="BOX OFFICE"
+        position={[0, 3.68, -0.22]}
+        size={[2.8, 0.28]}
+        color="#ffffff"
+        fontSize={100}
+      />
+      <CanvasLabel
+        text="TICKETS"
+        position={[0, 3.42, -0.22]}
+        size={[2.8, 0.22]}
+        color="#cf6148"
+        fontSize={72}
+      />
+      {/* Sign support rods */}
+      {[-1.4, 1.4].map((x, i) => (
+        <mesh key={i} position={[x, 2.88, -0.28]}>
+          <cylinderGeometry args={[0.025, 0.025, 1.45, 6]} />
+          <meshToonMaterial color="#3a3734" />
+        </mesh>
+      ))}
+
+      {/* ── Queuing rope post (in front of counter) ── */}
+      <group position={[2.2, 0, 0.9]}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.045, 0.06, 1.1, 8]} />
+          <meshToonMaterial color="#4a4643" />
+          <Outline />
+        </mesh>
+        {/* Post cap */}
+        <mesh position={[0, 0.6, 0]}>
+          <sphereGeometry args={[0.07, 8, 6]} />
+          <meshToonMaterial color="#3a3734" />
+        </mesh>
+        {/* Rope — simple stretched box */}
+        <mesh position={[-1.1, 0.44, 0]} rotation={[0, 0, 0]}>
+          <boxGeometry args={[2.0, 0.025, 0.025]} />
+          <meshBasicMaterial color="#6a5a52" />
+        </mesh>
+      </group>
+
+      {/* ── Window number plaques — "01" and "02" ── */}
+      {[-0.9, 0.9].map((x, i) => (
+        <group key={i} position={[x, 1.62, 0.56]}>
+          <mesh>
+            <boxGeometry args={[0.28, 0.28, 0.03]} />
+            <meshToonMaterial color="#3a3734" />
+          </mesh>
+          <CanvasLabel
+            text={`0${i + 1}`}
+            position={[0, 0, 0.03]}
+            size={[0.24, 0.22]}
+            color="#e8e4de"
+            fontSize={120}
+          />
+        </group>
+      ))}
+
     </group>
   )
 }
 
-function PopcornStand() {
+// ---------------------------------------------------------------------------
+// Food Court — replaces the old popcorn stand
+// A proper cinema concessions counter: service bar, menu board, food domes,
+// soda fountain, warm overhead strip light.
+// ---------------------------------------------------------------------------
+
+function FoodCourtCounter() {
   return (
-    <group position={[5.2, 0, -2.1]}>
-      {/* Box sits on the floor: height 1.45, so centre at y=0.725 */}
-      <mesh position={[0, 0.725, 0]} castShadow>
-        <boxGeometry args={[1.65, 1.45, 1.05]} />
-        <meshToonMaterial color="#83a098" />
+    <group position={[4.8, 0, -1.8]}>
+
+      {/* ── Main counter bar ── */}
+      <mesh position={[0, 1.0, 0]} castShadow receiveShadow>
+        <boxGeometry args={[3.8, 1.1, 0.9]} />
+        <meshToonMaterial color="#5c4033" />
         <Outline />
       </mesh>
-      <mesh position={[0, 0.725, 0.55]}>
-        <planeGeometry args={[1.22, 0.72]} />
-        <meshToonMaterial color="#f2e5ce" />
+      {/* Marble-ish counter top */}
+      <mesh position={[0, 1.58, 0]} castShadow>
+        <boxGeometry args={[3.9, 0.08, 1.0]} />
+        <meshToonMaterial color="#e8dfd0" />
+        <Outline />
       </mesh>
-      <CanvasLabel text="POPCORN" position={[0, 0.77, 0.57]} size={[1.08, 0.25]} color="#344843" fontSize={88} />
-      {/* Popcorn pieces on top of the box (box top = y 0 + 0.725 + 0.725 = 1.45) */}
-      {popcornPositions.map(([x, y, z], i) => (
-        <mesh key={i} position={[x, y - 1.75, z]} castShadow>
-          <dodecahedronGeometry args={[0.27, 0]} />
-          <meshToonMaterial color="#fff2d4" />
-          <Outline />
+      {/* Front panel detail strip */}
+      <mesh position={[0, 0.55, 0.46]}>
+        <boxGeometry args={[3.78, 0.06, 0.02]} />
+        <meshBasicMaterial color="#4a4643" />
+      </mesh>
+      <mesh position={[0, 0.28, 0.46]}>
+        <boxGeometry args={[3.78, 0.06, 0.02]} />
+        <meshBasicMaterial color="#4a4643" />
+      </mesh>
+
+      {/* ── Overhead menu board ── */}
+      <mesh position={[0, 3.55, -0.38]} castShadow>
+        <boxGeometry args={[3.6, 1.1, 0.12]} />
+        <meshToonMaterial color="#1c1a18" />
+        <Outline />
+      </mesh>
+      {/* Board face */}
+      <mesh position={[0, 3.55, -0.31]}>
+        <planeGeometry args={[3.4, 0.9]} />
+        <meshToonMaterial color="#242220" />
+      </mesh>
+      <CanvasLabel
+        text="FOOD COURT"
+        position={[0, 3.72, -0.28]}
+        size={[3.0, 0.38]}
+        color="#ffffff"
+        fontSize={110}
+      />
+      <CanvasLabel
+        text="POPCORN · NACHOS · HOT DOGS · DRINKS"
+        position={[0, 3.35, -0.28]}
+        size={[3.2, 0.28]}
+        color="#b0b8c0"
+        fontSize={56}
+      />
+      {/* Board support brackets */}
+      {[-1.6, 1.6].map((x, i) => (
+        <mesh key={i} position={[x, 2.85, -0.36]}>
+          <boxGeometry args={[0.07, 1.4, 0.07]} />
+          <meshToonMaterial color="#2e251e" />
         </mesh>
       ))}
+
+      {/* ── Overhead light strip ── */}
+      <mesh position={[0, 4.2, -0.3]}>
+        <boxGeometry args={[3.4, 0.07, 0.1]} />
+        <meshBasicMaterial color="#e8ecf0" />
+      </mesh>
+      <pointLight position={[0, 3.9, 0.1]} intensity={18} distance={5} color="#dce8f0" />
+
+      {/* ── Glass food display domes ── */}
+      {/* Dome 1 — left: popcorn tub */}
+      <group position={[-1.1, 1.62, 0]}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.28, 0.24, 0.32, 16]} />
+          <meshToonMaterial color="#4a4643" />
+          <Outline />
+        </mesh>
+        {/* Glass dome */}
+        <mesh position={[0, 0.28, 0]}>
+          <sphereGeometry args={[0.28, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <meshToonMaterial color="#b8d8dc" transparent />
+        </mesh>
+        {/* Popcorn puffs */}
+        {[[-0.1, 0.52, 0.05], [0.09, 0.56, -0.06], [0, 0.6, 0.0], [-0.07, 0.64, 0.08]].map(([px, py, pz], i) => (
+          <mesh key={i} position={[px, py, pz]}>
+            <dodecahedronGeometry args={[0.07, 0]} />
+            <meshToonMaterial color="#fff2d4" />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Dome 2 — centre: nachos chip pile */}
+      <group position={[0.1, 1.62, 0.1]}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.26, 0.22, 0.28, 16]} />
+          <meshToonMaterial color="#4a4643" />
+          <Outline />
+        </mesh>
+        <mesh position={[0, 0.26, 0]}>
+          <sphereGeometry args={[0.26, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <meshToonMaterial color="#b8d8dc" transparent />
+        </mesh>
+        {/* Triangular chip shapes approximated with tetrahedron */}
+        {[[-0.08, 0.44, 0], [0.07, 0.48, 0.05], [0, 0.52, -0.06]].map(([px, py, pz], i) => (
+          <mesh key={i} position={[px, py, pz]} rotation={[0.3 * i, 0.8 * i, 0]}>
+            <tetrahedronGeometry args={[0.1, 0]} />
+            <meshToonMaterial color="#f0a830" />
+          </mesh>
+        ))}
+      </group>
+
+      {/* ── Soda fountain machine (right side) ── */}
+      <group position={[1.55, 1.62, -0.1]}>
+        {/* Machine body */}
+        <mesh castShadow>
+          <boxGeometry args={[0.68, 0.9, 0.5]} />
+          <meshToonMaterial color="#3a4a52" />
+          <Outline />
+        </mesh>
+        {/* Screen panel */}
+        <mesh position={[0, 0.18, 0.26]}>
+          <planeGeometry args={[0.5, 0.42]} />
+          <meshToonMaterial color="#1a2830" />
+        </mesh>
+        {/* Nozzle row */}
+        {[-0.18, -0.06, 0.06, 0.18].map((nx, i) => (
+          <mesh key={i} position={[nx, -0.3, 0.28]}>
+            <cylinderGeometry args={[0.025, 0.02, 0.12, 6]} />
+            <meshToonMaterial color="#5a6068" />
+          </mesh>
+        ))}
+        {/* Drip tray */}
+        <mesh position={[0, -0.48, 0.22]}>
+          <boxGeometry args={[0.6, 0.04, 0.18]} />
+          <meshToonMaterial color="#5a6068" />
+          <Outline />
+        </mesh>
+        <CanvasLabel
+          text="DRINKS"
+          position={[0, 0.18, 0.27]}
+          size={[0.46, 0.18]}
+          color="#e8f4f8"
+          fontSize={80}
+        />
+      </group>
+
+      {/* ── "OPEN" neon-style badge on counter front ── */}
+      <mesh position={[-1.5, 1.3, 0.48]}>
+        <boxGeometry args={[0.55, 0.22, 0.04]} />
+        <meshToonMaterial color="#d75a3a" />
+        <Outline />
+      </mesh>
+      <CanvasLabel
+        text="OPEN"
+        position={[-1.5, 1.3, 0.51]}
+        size={[0.5, 0.18]}
+        color="#fff5df"
+        fontSize={90}
+      />
+
     </group>
   )
 }
@@ -457,28 +702,39 @@ function HangingLights() {
   )
 }
 
+// Per-stop FOV — tighter for close-up counters, wide for overview
+const cameraFovs = [42, 42, 26, 26, 40] as const
+
 function CameraRig({ activeStop, pointerRef }: LobbySceneProps) {
-  // Store smoothed camera state as a flat array to avoid object allocation per frame
   const smoothed = useRef([0, 4.2, 12, 0, 2.3, -2.1])
+  const smoothedFov = useRef(42)
 
   useFrame(({ camera, clock }, delta) => {
     const position = cameraPositions[activeStop] ?? cameraPositions[0]
-    const look = cameraTargets[activeStop] ?? cameraTargets[0]
+    const look     = cameraTargets[activeStop]   ?? cameraTargets[0]
+    const targetFov = cameraFovs[activeStop]     ?? 42
     const { x, y } = pointerRef.current
     const sway = Math.sin(clock.elapsedTime * 0.24) * 0.07
-    // Exponential smoothing — framerate-independent
     const f = 1 - Math.exp(-delta * 2.6)
     const s = smoothed.current
 
     s[0] += (position[0] + x * 0.35 + sway - s[0]) * f
-    s[1] += (position[1] + y * 0.18 - s[1]) * f
-    s[2] += (position[2] - s[2]) * f
-    s[3] += (look[0] + x * 0.6 - s[3]) * f
-    s[4] += (look[1] + y * 0.25 - s[4]) * f
-    s[5] += (look[2] - s[5]) * f
+    s[1] += (position[1] + y * 0.18          - s[1]) * f
+    s[2] += (position[2]                     - s[2]) * f
+    s[3] += (look[0]    + x * 0.6            - s[3]) * f
+    s[4] += (look[1]    + y * 0.25           - s[4]) * f
+    s[5] += (look[2]                         - s[5]) * f
 
     camera.position.set(s[0], s[1], s[2])
     camera.lookAt(s[3], s[4], s[5])
+
+    // Smooth FOV transition — only update when it's changed noticeably
+    const fovDiff = targetFov - smoothedFov.current
+    if (Math.abs(fovDiff) > 0.01) {
+      smoothedFov.current += fovDiff * f
+      ;(camera as THREE.PerspectiveCamera).fov = smoothedFov.current
+      ;(camera as THREE.PerspectiveCamera).updateProjectionMatrix()
+    }
   })
 
   return null
@@ -494,7 +750,7 @@ function LobbyScene({ activeStop, pointerRef }: LobbySceneProps) {
       <Room />
       <PosterWall />
       <TicketCounter />
-      <PopcornStand />
+      <FoodCourtCounter />
       <ScreensDoor />
       <FloatingTicket />
       <HangingLights />

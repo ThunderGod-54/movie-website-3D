@@ -1,21 +1,21 @@
 import { Canvas } from '@react-three/fiber'
-import { useRef, useState } from 'react'
+import { useRef, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import LobbyScene from '../components/three/LobbyScene'
 import './Home.css'
 
 const stops = [
-  { name: 'Welcome',      icon: '✳' },
-  { name: 'Now showing',  icon: '🎬' },
-  { name: 'Tickets',      icon: '🎟' },
-  { name: 'Popcorn',      icon: '🍿' },
-  { name: 'Screens',      icon: '🚪' },
+  { name: 'Welcome',               icon: '✳',  desc: 'Step inside'           },
+  { name: 'Now showing',           icon: '🎬', desc: 'Three films on tonight' },
+  { name: 'Tickets',               icon: '🎟', desc: 'Box office is open'     },
+  { name: 'Food Court',             icon: '🍔', desc: 'Grab a bite before the show' },
+  { name: 'Screens',               icon: '🚪', desc: 'Through the door'       },
 ]
 
 const nowShowingMovies = [
-  { title: 'The Odyssey',              meta: 'Epic · 2h 50m',    color: 'sage'  },
-  { title: 'Spider-Man: Brand New Day', meta: 'Action · 2h 15m', color: 'coral' },
-  { title: 'F1',                        meta: 'Drama · 2h 10m',  color: 'blue'  },
+  { title: 'The Odyssey',               meta: 'Epic · 2h 50m',    color: 'sage'  },
+  { title: 'Spider-Man: Brand New Day', meta: 'Action · 2h 15m',  color: 'coral' },
+  { title: 'F1',                        meta: 'Drama · 2h 10m',   color: 'blue'  },
 ]
 
 function supportsWebGL(): boolean {
@@ -28,27 +28,31 @@ function supportsWebGL(): boolean {
 }
 
 function Home() {
-  const [webglAvailable] = useState<boolean>(() => supportsWebGL())
-  const [activeStop, setActiveStop]   = useState(0)
-  const [drawerOpen, setDrawerOpen]   = useState(false)
-  const pointerRef       = useRef({ x: 0, y: 0 })
-  const gestureStartRef  = useRef<number | null>(null)
-  const wheelCooldownRef = useRef(false)
+  const [webglAvailable]            = useState<boolean>(() => supportsWebGL())
+  const [activeStop, setActiveStop] = useState(0)
+  const [menuOpen,   setMenuOpen]   = useState(false)
+  // When menu is open pause the 3-D render loop — saves ~16ms/frame of GPU work
+  const frameloop = menuOpen ? 'demand' : 'always'
+  const pointerRef                  = useRef({ x: 0, y: 0 })
+  const gestureStartRef             = useRef<number | null>(null)
+  const wheelCooldownRef            = useRef(false)
+
+  const toggleMenu = useCallback(() => setMenuOpen((v) => !v), [])
 
   function moveStop(direction: number) {
-    setActiveStop((current) => (current + direction + stops.length) % stops.length)
+    setActiveStop((c) => (c + direction + stops.length) % stops.length)
   }
 
   function goToStop(index: number) {
     setActiveStop(index)
-    setDrawerOpen(false)
+    setMenuOpen(false)
   }
 
   function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
-    const bounds = event.currentTarget.getBoundingClientRect()
+    const b = event.currentTarget.getBoundingClientRect()
     pointerRef.current = {
-      x: ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
-      y: 1 - ((event.clientY - bounds.top) / bounds.height) * 2,
+      x: ((event.clientX - b.left) / b.width) * 2 - 1,
+      y: 1 - ((event.clientY - b.top) / b.height) * 2,
     }
   }
 
@@ -78,8 +82,8 @@ function Home() {
       onPointerUp={handlePointerUp}
       onWheel={handleWheel}
     >
-      {/* ── Top header ─────────────────────────────────────────── */}
-      <header className="lobby-header">
+      {/* ── Header ─────────────────────────────────────────────── */}
+      <header className={`lobby-header${menuOpen ? ' menu-is-open' : ''}`}>
         <Link className="lobby-home-link" to="/" aria-label="Return to Goodshow home">
           <span aria-hidden="true">←</span> Goodshow
         </Link>
@@ -87,11 +91,11 @@ function Home() {
         <button
           className="lobby-menu-btn"
           type="button"
-          aria-label={drawerOpen ? 'Close navigation' : 'Open navigation'}
-          aria-expanded={drawerOpen}
-          onClick={() => setDrawerOpen((v) => !v)}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+          onClick={toggleMenu}
         >
-          <span className={`hamburger ${drawerOpen ? 'is-open' : ''}`}>
+          <span className={`hamburger ${menuOpen ? 'is-open' : ''}`}>
             <span /><span /><span />
           </span>
         </button>
@@ -106,7 +110,7 @@ function Home() {
             camera={{ position: [0, 4.2, 12], fov: 42, near: 0.1, far: 100 }}
             gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
             shadows
-            frameloop="always"
+            frameloop={frameloop}
           >
             <color attach="background" args={['#d7d2c4']} />
             <LobbyScene activeStop={activeStop} pointerRef={pointerRef} />
@@ -124,10 +128,7 @@ function Home() {
               {nowShowingMovies.map((movie, index) => (
                 <article className={`fallback-movie fallback-movie-${movie.color}`} key={movie.title}>
                   <span className="fallback-movie-number">0{index + 1}</span>
-                  <div>
-                    <h2>{movie.title}</h2>
-                    <p>{movie.meta}</p>
-                  </div>
+                  <div><h2>{movie.title}</h2><p>{movie.meta}</p></div>
                   <span className="fallback-movie-mark" aria-hidden="true">✳</span>
                 </article>
               ))}
@@ -136,7 +137,6 @@ function Home() {
           </section>
         )}
 
-        {/* current stop label — bottom-left */}
         {webglAvailable && (
           <div className="lobby-scene-caption" aria-live="polite">
             <span className="caption-overline">TAKE A LOOK AROUND</span>
@@ -145,54 +145,49 @@ function Home() {
         )}
       </div>
 
-      {/* ── Side drawer overlay ─────────────────────────────────── */}
-      {drawerOpen && (
-        <div
-          className="drawer-backdrop"
-          aria-hidden="true"
-          onClick={() => setDrawerOpen(false)}
-        />
-      )}
+      {/* ── Fullscreen menu overlay ─────────────────────────────── */}
+      <div className={`fullscreen-menu ${menuOpen ? 'is-open' : ''}`} aria-hidden={!menuOpen}>
 
-      <nav
-        className={`lobby-drawer ${drawerOpen ? 'is-open' : ''}`}
-        aria-label="Theatre navigation"
-        aria-hidden={!drawerOpen}
-      >
-        <p className="drawer-heading">EXPLORE</p>
-
-        <ul className="drawer-stops" role="list">
-          {stops.map((stop, index) => (
-            <li key={stop.name}>
-              <button
-                className={`drawer-stop-btn ${index === activeStop ? 'is-active' : ''}`}
-                type="button"
-                onClick={() => goToStop(index)}
-                aria-current={index === activeStop ? 'step' : undefined}
-              >
-                <span className="drawer-stop-icon" aria-hidden="true">{stop.icon}</span>
-                <span className="drawer-stop-name">{stop.name}</span>
-                <span className="drawer-stop-arrow" aria-hidden="true">→</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-
-        <div className="drawer-movies">
-          <p className="drawer-movies-label">NOW SHOWING</p>
-          {nowShowingMovies.map((m) => (
-            <div className="drawer-movie-row" key={m.title}>
-              <span className={`drawer-movie-dot drawer-movie-dot-${m.color}`} aria-hidden="true" />
-              <div>
-                <p className="drawer-movie-title">{m.title}</p>
-                <p className="drawer-movie-meta">{m.meta}</p>
-              </div>
-            </div>
-          ))}
+        <div className="fsm-left">
+          <p className="fsm-label">EXPLORE THE THEATRE</p>
+          <nav aria-label="Theatre navigation">
+            <ol className="fsm-stops" role="list">
+              {stops.map((stop, index) => (
+                <li key={stop.name} className="fsm-stop-item">
+                  <button
+                    className={`fsm-stop-btn ${index === activeStop ? 'is-active' : ''}`}
+                    type="button"
+                    tabIndex={menuOpen ? 0 : -1}
+                    onClick={() => goToStop(index)}
+                  >
+                    <span className="fsm-stop-num">0{index + 1}</span>
+                    <span className="fsm-stop-name">{stop.name}</span>
+                    <span className="fsm-stop-desc">{stop.desc}</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </nav>
         </div>
 
-        <p className="drawer-hint">Scroll · Swipe · Wander</p>
-      </nav>
+        <div className="fsm-right">
+          <p className="fsm-label">NOW SHOWING</p>
+          <div className="fsm-movies">
+            {nowShowingMovies.map((m, i) => (
+              <div className="fsm-movie" key={m.title}>
+                <span className="fsm-movie-num">0{i + 1}</span>
+                <div>
+                  <p className="fsm-movie-title">{m.title}</p>
+                  <p className="fsm-movie-meta">{m.meta}</p>
+                </div>
+                <span className={`fsm-movie-dot fsm-movie-dot-${m.color}`} aria-hidden="true" />
+              </div>
+            ))}
+          </div>
+          <p className="fsm-hint">Scroll · Swipe · Wander through the room</p>
+        </div>
+
+      </div>
     </main>
   )
 }
