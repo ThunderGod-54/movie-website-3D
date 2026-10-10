@@ -1,6 +1,7 @@
 import { Canvas } from '@react-three/fiber'
 import { useRef, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
+import BookingModal from '../components/BookingModal'
 import LobbyScene from '../components/three/LobbyScene'
 import './Home.css'
 
@@ -31,8 +32,8 @@ function Home() {
   const [webglAvailable]            = useState<boolean>(() => supportsWebGL())
   const [activeStop, setActiveStop] = useState(0)
   const [menuOpen,   setMenuOpen]   = useState(false)
-  // When menu is open pause the 3-D render loop — saves ~16ms/frame of GPU work
-  const frameloop = menuOpen ? 'demand' : 'always'
+  const [bookingOpen, setBookingOpen] = useState(false)
+  const frameloop = menuOpen || bookingOpen ? 'demand' : 'always'
   const pointerRef                  = useRef({ x: 0, y: 0 })
   const gestureStartRef             = useRef<number | null>(null)
   const wheelCooldownRef            = useRef(false)
@@ -113,7 +114,11 @@ function Home() {
             frameloop={frameloop}
           >
             <color attach="background" args={['#d7d2c4']} />
-            <LobbyScene activeStop={activeStop} pointerRef={pointerRef} />
+            <LobbyScene
+              activeStop={activeStop}
+              pointerRef={pointerRef}
+              onTicketClick={() => setBookingOpen(true)}
+            />
           </Canvas>
         )}
 
@@ -188,6 +193,8 @@ function Home() {
         </div>
 
       </div>
+      {/* ── Booking modal ───────────────────────────────────────── */}
+      {bookingOpen && <BookingModal onClose={() => setBookingOpen(false)} />}
     </main>
   )
 }
