@@ -38,6 +38,52 @@
   user-select: none;
 }
 
+.movie-poster-flight {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+.movie-poster-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(145px, 17vw, 225px);
+  aspect-ratio: 0.68;
+  padding: 8px 8px 30px;
+  overflow: hidden;
+  border: 1px solid rgba(237, 214, 168, 0.8);
+  border-radius: 4px;
+  box-shadow: 0 18px 45px rgba(15, 12, 18, 0.35);
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+}
+
+.movie-poster-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: inherit;
+}
+
+.movie-poster-card span {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  left: 8px;
+  overflow: hidden;
+  color: #fff8e8;
+  font-family: var(--hand);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
 .doodle-world {
   position: absolute;
   top: 50%;

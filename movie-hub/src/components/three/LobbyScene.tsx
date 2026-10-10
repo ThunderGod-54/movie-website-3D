@@ -5,6 +5,7 @@ import type { RefObject } from 'react'
 import * as THREE from 'three'
 import { CanvasTexture, Group, SRGBColorSpace, TextureLoader, Texture } from 'three'
 import Auditorium from './Auditorium'
+import { moviePosters } from './moviePosters'
 
 type LobbySceneProps = {
   activeStop: number
@@ -12,6 +13,7 @@ type LobbySceneProps = {
   onTicketClick: () => void
   onFoodClick: () => void
   onScreensClick: () => void
+  insideAuditorium: boolean
 }
 
 const cameraPositions = [
@@ -24,7 +26,7 @@ const cameraPositions = [
   // 3 — Food Court: comfortable wide view — counter fits fully in frame
   [2.2, 3.4, 2.8],
   // 4 — Screens door
-  [0, 6, 12.5],
+  [0.5, 3.5, -4.2],
 ] as const
 
 const cameraTargets = [
@@ -34,7 +36,7 @@ const cameraTargets = [
   [-5.55, 1.8, -1.6],
   // 3 — Centre of food court counter, mid-height
   [4.8, 1.8, -1.8],
-  [0, 2.8, -12],
+  [4.25, 1.9, -7.55],
 ] as const
 
 // FOV stays consistent — models are now sized to fit naturally
@@ -169,41 +171,6 @@ function Room() {
 // ---------------------------------------------------------------------------
 // All 6 poster movies — rotated in pairs every 3.5s
 // ---------------------------------------------------------------------------
-const allMovies = [
-  // Set A
-  {
-    title: 'The Odyssey',
-    url: 'https://m.media-amazon.com/images/I/71qQXdOmSPL._AC_UF1000,1000_QL80_.jpg',
-    fallbackColor: '#3a4a6b',
-  },
-  {
-    title: 'Spider-Man: Brand New Day',
-    url: 'https://i.scdn.co/image/ab67616d0000b2733b4123d5765f3068a788fa30',
-    fallbackColor: '#b02020',
-  },
-  {
-    title: 'F1',
-    url: 'https://thumb.wikimedia.org/wikipedia/en/thumb/3/38/F1_%282025_film%29.png/250px-F1_%282025_film%29.png',
-    fallbackColor: '#1a1a1a',
-  },
-  // Set B
-  {
-    title: 'Project Hail Mary',
-    url: 'https://m.media-amazon.com/images/I/81o4R4G+xHL._UF1000,1000_QL80_.jpg',
-    fallbackColor: '#1a3a5c',
-  },
-  {
-    title: 'Dhurandhar 2',
-    url: 'https://m.media-amazon.com/images/M/MV5BNzdkNjAxNWMtNWY3My00NTI1LTg2YWQtOGI3MDA0NzdhMjEyXkEyXkFqcGc@._V1_.jpg',
-    fallbackColor: '#2a1a0a',
-  },
-  {
-    title: 'Obsession',
-    url: 'https://thumb.wikimedia.org/wikipedia/en/thumb/0/05/Obsession_theatrical_poster.jpeg/250px-Obsession_theatrical_poster.jpeg',
-    fallbackColor: '#1a1a2e',
-  },
-] as const
-
 function useRemoteTexture(url: string): Texture | null {
   const [texture, setTexture] = useState<Texture | null>(null)
   useEffect(() => {
@@ -223,7 +190,7 @@ function useRemoteTexture(url: string): Texture | null {
 
 // Preload all textures once at module level so they're ready before the slot is shown
 function useAllTextures() {
-  const textures = allMovies.map(m => useRemoteTexture(m.url)) // eslint-disable-line react-hooks/rules-of-hooks
+  const textures = moviePosters.map(m => useRemoteTexture(m.url)) // eslint-disable-line react-hooks/rules-of-hooks
   return textures
 }
 
@@ -242,8 +209,8 @@ function AnimatedPoster({
   const textures = useAllTextures()
   const curTex  = textures[setIndex]
   const nextTex = textures[nextIndex]
-  const cur     = allMovies[setIndex]
-  const nxt     = allMovies[nextIndex]
+  const cur     = moviePosters[setIndex]
+  const nxt     = moviePosters[nextIndex]
 
   return (
     <group position={position}>
@@ -322,7 +289,7 @@ function PosterWall() {
           setSlots(prev => {
             const next = [...prev]
             const newCur = prev[slotIdx].next
-            const newNext = (newCur + 3) % allMovies.length
+            const newNext = (newCur + 3) % moviePosters.length
             next[slotIdx] = { cur: newCur, next: newNext, fade: 0 }
             return next
           })
@@ -820,14 +787,14 @@ function HangingLights() {
   )
 }
 
-function CameraRig({ activeStop, pointerRef }: Pick<LobbySceneProps, 'activeStop' | 'pointerRef'>) {
+function CameraRig({ activeStop, insideAuditorium, pointerRef }: Pick<LobbySceneProps, 'activeStop' | 'insideAuditorium' | 'pointerRef'>) {
   const smoothed    = useRef([0, 4.2, 12, 0, 2.3, -2.1])
   const smoothedFov = useRef(42)
 
   useFrame(({ camera, clock }, delta) => {
-    const position  = cameraPositions[activeStop] ?? cameraPositions[0]
-    const look      = cameraTargets[activeStop]   ?? cameraTargets[0]
-    const targetFov = cameraFovs[activeStop]      ?? 42
+    const position = insideAuditorium ? [0, 6.2, 10.5] : cameraPositions[activeStop] ?? cameraPositions[0]
+    const look = insideAuditorium ? [0, 3.7, -13] : cameraTargets[activeStop] ?? cameraTargets[0]
+    const targetFov = insideAuditorium ? 42 : cameraFovs[activeStop] ?? 42
     const { x, y }  = pointerRef.current
     const sway = Math.sin(clock.elapsedTime * 0.24) * 0.07
     const f    = 1 - Math.exp(-delta * 2.6)
@@ -853,10 +820,10 @@ function CameraRig({ activeStop, pointerRef }: Pick<LobbySceneProps, 'activeStop
   return null
 }
 
-function LobbyScene({ activeStop, pointerRef, onTicketClick, onFoodClick, onScreensClick }: LobbySceneProps) {
+function LobbyScene({ activeStop, insideAuditorium, pointerRef, onTicketClick, onFoodClick, onScreensClick }: LobbySceneProps) {
   return (
     <>
-      {activeStop === 4 ? (
+      {insideAuditorium ? (
         <Auditorium />
       ) : (
         <>
@@ -873,7 +840,7 @@ function LobbyScene({ activeStop, pointerRef, onTicketClick, onFoodClick, onScre
           <LobbyFurniture />
         </>
       )}
-      <CameraRig activeStop={activeStop} pointerRef={pointerRef} />
+      <CameraRig activeStop={activeStop} insideAuditorium={insideAuditorium} pointerRef={pointerRef} />
     </>
   )
 }

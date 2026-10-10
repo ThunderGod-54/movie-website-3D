@@ -48,6 +48,19 @@ function playSuccessChime() {
   }
 }
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, character => {
+    const entities: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    }
+    return entities[character]
+  })
+}
+
 type Step = 'movie' | 'showtime' | 'seats' | 'confirm' | 'success'
 
 type BookingState = {
@@ -103,6 +116,62 @@ export default function BookingModal({ onClose, onGoToFood }: Props) {
     setStep('success')
   }
 
+  function downloadTicketInvoice() {
+    const movieTitle = escapeHtml(selectedMovie?.title ?? 'Cinema booking')
+    const showtime = escapeHtml(booking.showtime ?? '')
+    const seats = escapeHtml(booking.seats.join(', '))
+    const bookingReference = `GS-${Date.now().toString(36).toUpperCase()}`
+    const bookingDate = new Intl.DateTimeFormat(undefined, {
+      dateStyle: 'long',
+    }).format(new Date())
+    const ticketHtml = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Goodshow ticket and invoice</title>
+  <style>
+    body{margin:0;padding:36px;background:#f4efe5;color:#29251f;font:16px/1.5 Arial,sans-serif}
+    main{max-width:620px;margin:auto;padding:36px;background:#fffdf8;border:1px solid #ded4c3;border-radius:16px}
+    h1{margin:0;color:#c85840;font-size:14px;letter-spacing:.16em}
+    h2{margin:28px 0 4px;font-size:30px}
+    p{color:#71695e}
+    dl{margin:28px 0}
+    dl div{display:flex;justify-content:space-between;gap:20px;padding:12px 0;border-bottom:1px solid #eee8dd}
+    dt{color:#71695e}dd{margin:0;text-align:right;font-weight:700}
+    .total{font-size:20px;color:#c85840}
+    .reference{font-size:12px}
+    @media print{body{padding:0;background:#fff}main{border:0;box-shadow:none}}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>GOODSHOW CINEMA</h1>
+    <h2>${movieTitle}</h2>
+    <p>Your ticket and payment invoice</p>
+    <dl>
+      <div><dt>Booking reference</dt><dd class="reference">${bookingReference}</dd></div>
+      <div><dt>Date</dt><dd>${escapeHtml(bookingDate)}</dd></div>
+      <div><dt>Showtime</dt><dd>${showtime}</dd></div>
+      <div><dt>Seats</dt><dd>${seats}</dd></div>
+      <div><dt>Tickets</dt><dd>${booking.seats.length}</dd></div>
+      <div><dt>Paid</dt><dd class="total">₹${total}</dd></div>
+    </dl>
+    <p>Present this ticket at the cinema. Thank you for choosing Goodshow!</p>
+  </main>
+</body>
+</html>`
+    const file = new Blob([ticketHtml], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(file)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `goodshow-ticket-invoice-${bookingReference}.html`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
   function handleGoFood() {
     onClose()
     onGoToFood()
@@ -111,7 +180,13 @@ export default function BookingModal({ onClose, onGoToFood }: Props) {
   // ── Success screen ──────────────────────────────────────────────────────────
   if (step === 'success') {
     return (
-      <div className="bm-backdrop" onClick={onClose}>
+      <div
+        className="bm-backdrop"
+        onClick={onClose}
+        onWheel={event => event.stopPropagation()}
+        onPointerDown={event => event.stopPropagation()}
+        onPointerUp={event => event.stopPropagation()}
+      >
         <div className="bm-modal bm-modal--success" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
           <button className="bm-close-btn bm-close-btn--abs" onClick={onClose} aria-label="Close">✕</button>
 
@@ -135,6 +210,10 @@ export default function BookingModal({ onClose, onGoToFood }: Props) {
             </div>
           </div>
 
+          <button className="bm-download-btn" onClick={downloadTicketInvoice}>
+            ↓ Download ticket &amp; invoice
+          </button>
+
           <div className="bm-success-actions">
             <div className="bm-food-prompt">
               <p className="bm-food-prompt-text">🍿 Want to pre-order from the Food Court?</p>
@@ -151,7 +230,13 @@ export default function BookingModal({ onClose, onGoToFood }: Props) {
 
   // ── Main booking flow ───────────────────────────────────────────────────────
   return (
-    <div className="bm-backdrop" onClick={onClose}>
+    <div
+      className="bm-backdrop"
+      onClick={onClose}
+      onWheel={event => event.stopPropagation()}
+      onPointerDown={event => event.stopPropagation()}
+      onPointerUp={event => event.stopPropagation()}
+    >
       <div className="bm-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Book tickets">
 
         {/* Header */}

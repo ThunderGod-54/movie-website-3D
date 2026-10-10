@@ -32,6 +32,7 @@ function supportsWebGL(): boolean {
 function Home() {
   const [webglAvailable]              = useState<boolean>(() => supportsWebGL())
   const [activeStop, setActiveStop]   = useState(0)
+  const [insideAuditorium, setInsideAuditorium] = useState(false)
   const [menuOpen,   setMenuOpen]     = useState(false)
   const [bookingOpen, setBookingOpen] = useState(false)
   const [foodOpen,    setFoodOpen]    = useState(false)
@@ -50,10 +51,12 @@ function Home() {
   const toggleMenu = useCallback(() => setMenuOpen((v) => !v), [])
 
   function moveStop(direction: number) {
+    if (insideAuditorium) return
     setActiveStop((c) => (c + direction + stops.length) % stops.length)
   }
 
   function goToStop(index: number) {
+    setInsideAuditorium(false)
     setActiveStop(index)
     setMenuOpen(false)
   }
@@ -128,7 +131,8 @@ function Home() {
               pointerRef={pointerRef}
               onTicketClick={() => setBookingOpen(true)}
               onFoodClick={() => setFoodOpen(true)}
-              onScreensClick={() => setActiveStop(4)}
+              onScreensClick={() => setInsideAuditorium(true)}
+              insideAuditorium={insideAuditorium}
             />
           </Canvas>
         )}
@@ -155,9 +159,16 @@ function Home() {
 
         {webglAvailable && (
           <div className="lobby-scene-caption" aria-live="polite">
-            <span className="caption-overline">TAKE A LOOK AROUND</span>
-            <strong>{stops[activeStop].name}</strong>
+            <span className="caption-overline">
+              {insideAuditorium ? 'WELCOME INSIDE' : activeStop === 4 ? 'CLICK THE DOOR TO ENTER' : 'TAKE A LOOK AROUND'}
+            </span>
+            <strong>{insideAuditorium ? 'The Auditorium' : stops[activeStop].name}</strong>
           </div>
+        )}
+        {insideAuditorium && (
+          <button className="auditorium-exit-btn" type="button" onClick={() => setInsideAuditorium(false)}>
+            ← Back to lobby
+          </button>
         )}
       </div>
 

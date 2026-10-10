@@ -177,6 +177,34 @@
   transform: scale(1.08) translateY(-32px) !important;
 }
 
+.landing-hero.is-scrolling {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+.landing-hero.is-scrolling > :not(h1) {
+  visibility: hidden;
+}
+
+.landing-hero.is-scrolling h1 {
+  position: fixed;
+  z-index: 6;
+  top: clamp(100px, 15vh, 145px);
+  left: 0;
+  width: 100%;
+  color: #fff8e8;
+  font-size: clamp(44px, 6vw, 76px);
+  line-height: 0.9;
+  text-shadow: 0 3px 22px rgba(20, 14, 20, 0.75);
+  pointer-events: none;
+}
+
+.landing-hero.is-scrolling h1 span {
+  color: #f2a081;
+}
+
 .eyebrow {
   margin: 0 0 18px;
   font-size: 10px;

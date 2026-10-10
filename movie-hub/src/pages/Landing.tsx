@@ -64,9 +64,8 @@ function Landing() {
 
       <main className="landing-main">
         <section
-          className={`landing-hero ${isActivated ? 'is-faded' : ''}`}
+          className={`landing-hero ${isActivated ? 'is-scrolling' : ''}`}
           aria-labelledby="landing-title"
-          aria-hidden={isActivated}
         >
           <p className="eyebrow"><span className="eyebrow-star" aria-hidden="true">✳</span> YOUR NEIGHBOURHOOD PICTURE HOUSE</p>
           <h1 id="landing-title">A little <span>movie</span><br />magic, this way.</h1>

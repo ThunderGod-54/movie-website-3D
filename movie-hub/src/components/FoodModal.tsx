@@ -79,7 +79,13 @@ export default function FoodModal({ onClose }: { onClose: () => void }) {
   // ── Success ─────────────────────────────────────────────────────────────────
   if (ordered) {
     return (
-      <div className="fm-backdrop" onClick={onClose}>
+      <div
+        className="fm-backdrop"
+        onClick={onClose}
+        onWheel={event => event.stopPropagation()}
+        onPointerDown={event => event.stopPropagation()}
+        onPointerUp={event => event.stopPropagation()}
+      >
         <div className="fm-modal fm-modal--success" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
           <button className="fm-close-abs" onClick={onClose} aria-label="Close">✕</button>
           <div className="fm-success-icon" aria-hidden="true">
@@ -112,7 +118,13 @@ export default function FoodModal({ onClose }: { onClose: () => void }) {
 
   // ── Menu ─────────────────────────────────────────────────────────────────────
   return (
-    <div className="fm-backdrop" onClick={onClose}>
+    <div
+      className="fm-backdrop"
+      onClick={onClose}
+      onWheel={event => event.stopPropagation()}
+      onPointerDown={event => event.stopPropagation()}
+      onPointerUp={event => event.stopPropagation()}
+    >
       <div className="fm-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Food Court">
 
         <div className="fm-header">

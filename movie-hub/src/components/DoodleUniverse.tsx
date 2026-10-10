@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { moviePosters } from './three/moviePosters'
 import './DoodleUniverse.css'
 
 type DoodleItem = {
@@ -211,6 +212,7 @@ export function DoodleUniverse({ isActivated, isModalOpen = false }: DoodleUnive
   const sceneRef = useRef<HTMLDivElement>(null)
   const worldRef = useRef<HTMLDivElement>(null)
   const particleRefs = useRef<(HTMLDivElement | null)[]>([])
+  const moviePosterRefs = useRef<(HTMLDivElement | null)[]>([])
   const [selectedDoodle, setSelectedDoodle] = useState<DoodleItem | null>(null)
 
   // Configuration tuned for full-screen edge-to-edge depth flight
@@ -399,6 +401,39 @@ export function DoodleUniverse({ isActivated, isModalOpen = false }: DoodleUnive
         el.style.pointerEvents = opacity > 0.08 ? 'auto' : 'none'
       }
 
+      const posterCount = moviePosters.length
+      const posterLayout = [
+        [-0.36, -0.05],
+        [0.36, 0.12],
+        [-0.39, 0.24],
+        [0.39, -0.24],
+        [-0.29, 0.4],
+        [0.29, 0.4],
+      ]
+      for (let i = 0; i < posterCount; i++) {
+        const poster = moviePosterRefs.current[i]
+        if (!poster) continue
+
+        const raw = (i / posterCount) * C.depth + currentZ
+        const wrapped = ((raw % C.depth) + C.depth) % C.depth
+        const z = wrapped - C.depth
+        const progress = (z + C.depth) / C.depth
+        let opacity = progress < C.deadZone
+          ? 0
+          : progress < C.deadZone + C.fadeIn
+            ? (progress - C.deadZone) / C.fadeIn
+            : 1
+        if (progress > 1 - C.fadeOut) {
+          opacity = Math.min(opacity, (1 - progress) / C.fadeOut)
+        }
+        const [xRatio, yRatio] = posterLayout[i]
+        const drift = Math.sin(progress * Math.PI * 2 + i) * 24
+        const rotation = Math.sin(progress * Math.PI * 2 + i * 2) * 5
+        poster.style.transform =
+          `translate3d(${(window.innerWidth * xRatio + drift).toFixed(1)}px, ${(window.innerHeight * yRatio).toFixed(1)}px, ${z.toFixed(1)}px) translate(-50%, -50%) scale(0.72) rotate(${rotation.toFixed(1)}deg)`
+        poster.style.opacity = opacity.toFixed(3)
+      }
+
       rafId = requestAnimationFrame(tick)
     }
 
@@ -461,6 +496,21 @@ export function DoodleUniverse({ isActivated, isModalOpen = false }: DoodleUnive
         role="region"
         aria-label="3D cinema doodle infinite universe"
       >
+        <div className="movie-poster-flight" aria-hidden="true">
+          {moviePosters.map((movie, index) => (
+            <div
+              key={movie.title}
+              ref={(element) => {
+                moviePosterRefs.current[index] = element
+              }}
+              className="movie-poster-card"
+              style={{ backgroundColor: movie.fallbackColor }}
+            >
+              <img src={movie.url} alt="" />
+              <span>{movie.title}</span>
+            </div>
+          ))}
+        </div>
         <div className="doodle-world" ref={worldRef}>
           {Array.from({ length: PARTICLE_COUNT }).map((_, i) => {
             const doodle = CINEMA_DOODLES[i % CINEMA_DOODLES.length]

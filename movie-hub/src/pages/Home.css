@@ -156,6 +156,26 @@
   line-height: 1;
 }
 
+.auditorium-exit-btn {
+  position: absolute;
+  z-index: 5;
+  left: clamp(20px, 6vw, 92px);
+  top: 96px;
+  padding: 11px 16px;
+  border: 1px solid rgba(245, 236, 219, 0.4);
+  border-radius: 999px;
+  color: #f5ecdb;
+  background: rgba(40, 31, 38, 0.78);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease;
+}
+.auditorium-exit-btn:hover {
+  background: rgba(40, 31, 38, 0.96);
+  transform: translateY(-1px);
+}
+
 /* ─────────────────────────────────────────────────────────────
    Fallback (no WebGL)
 ───────────────────────────────────────────────────────────── */
