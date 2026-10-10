@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { playSelectionTick } from '../utils/selectionSound'
 import './FoodModal.css'
 
 const menuItems = [
@@ -42,6 +43,7 @@ export default function FoodModal({ onClose }: { onClose: () => void }) {
   const [ordered, setOrdered] = useState(false)
 
   function addItem(id: string) {
+    playSelectionTick()
     setCart(c => {
       const ex = c.find(i => i.id === id)
       return ex ? c.map(i => i.id === id ? { ...i, qty: i.qty + 1 } : i) : [...c, { id, qty: 1 }]
@@ -49,6 +51,8 @@ export default function FoodModal({ onClose }: { onClose: () => void }) {
   }
 
   function removeItem(id: string) {
+    if (!cart.some(item => item.id === id)) return
+    playSelectionTick()
     setCart(c => {
       const ex = c.find(i => i.id === id)
       if (!ex) return c

@@ -4,12 +4,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import * as THREE from 'three'
 import { CanvasTexture, Group, SRGBColorSpace, TextureLoader, Texture } from 'three'
+import Auditorium from './Auditorium'
 
 type LobbySceneProps = {
   activeStop: number
   pointerRef: RefObject<{ x: number; y: number }>
   onTicketClick: () => void
   onFoodClick: () => void
+  onScreensClick: () => void
 }
 
 const cameraPositions = [
@@ -22,7 +24,7 @@ const cameraPositions = [
   // 3 — Food Court: comfortable wide view — counter fits fully in frame
   [2.2, 3.4, 2.8],
   // 4 — Screens door
-  [0.5, 3.5, -4.2],
+  [0, 6, 12.5],
 ] as const
 
 const cameraTargets = [
@@ -32,7 +34,7 @@ const cameraTargets = [
   [-5.55, 1.8, -1.6],
   // 3 — Centre of food court counter, mid-height
   [4.8, 1.8, -1.8],
-  [4.25, 1.9, -7.55],
+  [0, 2.8, -12],
 ] as const
 
 // FOV stays consistent — models are now sized to fit naturally
@@ -736,7 +738,7 @@ function LobbyFurniture() {
   )
 }
 
-function ScreensDoor() {
+function ScreensDoor({ onClick }: { onClick: () => void }) {
   return (
     <group position={[4.25, 0, -7.55]}>
       <mesh position={[0, 1.72, 0]} castShadow>
@@ -758,6 +760,16 @@ function ScreensDoor() {
         <meshToonMaterial color="#e8c982" />
       </mesh>
       <CanvasLabel text="SCREENS" position={[0, 3.25, 0.23]} size={[1.8, 0.36]} color="#3a3028" fontSize={100} />
+      <mesh
+        position={[0, 1.72, 0.42]}
+        onClick={(event) => {
+          event.stopPropagation()
+          onClick()
+        }}
+      >
+        <boxGeometry args={[2.4, 3.5, 0.08]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
     </group>
   )
 }
@@ -841,20 +853,26 @@ function CameraRig({ activeStop, pointerRef }: Pick<LobbySceneProps, 'activeStop
   return null
 }
 
-function LobbyScene({ activeStop, pointerRef, onTicketClick, onFoodClick }: LobbySceneProps) {
+function LobbyScene({ activeStop, pointerRef, onTicketClick, onFoodClick, onScreensClick }: LobbySceneProps) {
   return (
     <>
-      <ambientLight intensity={1.7} />
-      <hemisphereLight args={['#fff1d5', '#705448', 1.2]} />
-      <directionalLight position={[-4, 8, 6]} intensity={2.5} castShadow shadow-mapSize={[1024, 1024]} />
-      <Room />
-      <PosterWall />
-      <TicketCounter onClick={onTicketClick} />
-      <FoodCourtCounter onClick={onFoodClick} />
-      <ScreensDoor />
-      <FloatingTicket />
-      <HangingLights />
-      <LobbyFurniture />
+      {activeStop === 4 ? (
+        <Auditorium />
+      ) : (
+        <>
+          <ambientLight intensity={1.7} />
+          <hemisphereLight args={['#fff1d5', '#705448', 1.2]} />
+          <directionalLight position={[-4, 8, 6]} intensity={2.5} castShadow shadow-mapSize={[1024, 1024]} />
+          <Room />
+          <PosterWall />
+          <TicketCounter onClick={onTicketClick} />
+          <FoodCourtCounter onClick={onFoodClick} />
+          <ScreensDoor onClick={onScreensClick} />
+          <FloatingTicket />
+          <HangingLights />
+          <LobbyFurniture />
+        </>
+      )}
       <CameraRig activeStop={activeStop} pointerRef={pointerRef} />
     </>
   )

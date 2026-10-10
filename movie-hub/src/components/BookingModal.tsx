@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { playSelectionTick } from '../utils/selectionSound'
 import './BookingModal.css'
 
 const movies = [
@@ -69,19 +70,23 @@ export default function BookingModal({ onClose, onGoToFood }: Props) {
   const stepIndex     = ['movie', 'showtime', 'seats', 'confirm'].indexOf(step)
 
   function selectMovie(id: string) {
+    playSelectionTick()
     setBooking(b => ({ ...b, movie: id }))
     setStep('showtime')
   }
 
   function selectShowtime(t: string) {
+    playSelectionTick()
     setBooking(b => ({ ...b, showtime: t }))
     setStep('seats')
   }
 
   function toggleSeat(seatId: string) {
+    const isSelected = booking.seats.includes(seatId)
+    if (isSelected || booking.seats.length < 8) playSelectionTick()
     setBooking(b => ({
       ...b,
-      seats: b.seats.includes(seatId)
+      seats: isSelected
         ? b.seats.filter(s => s !== seatId)
         : b.seats.length < 8 ? [...b.seats, seatId] : b.seats,
     }))

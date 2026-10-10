@@ -127,6 +127,8 @@ function Home() {
               activeStop={activeStop}
               pointerRef={pointerRef}
               onTicketClick={() => setBookingOpen(true)}
+              onFoodClick={() => setFoodOpen(true)}
+              onScreensClick={() => setActiveStop(4)}
             />
           </Canvas>
         )}
@@ -203,7 +205,14 @@ function Home() {
 
       </div>
       {/* ── Booking modal ───────────────────────────────────────── */}
-      {bookingOpen && <BookingModal onClose={() => setBookingOpen(false)} />}
+      {bookingOpen && (
+        <BookingModal
+          onClose={() => setBookingOpen(false)}
+          onGoToFood={openFoodCourt}
+        />
+      )}
+      {/* ── Food modal ──────────────────────────────────────────── */}
+      {foodOpen && <FoodModal onClose={() => setFoodOpen(false)} />}
     </main>
   )
 }
