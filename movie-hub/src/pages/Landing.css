@@ -212,12 +212,6 @@
   letter-spacing: 1.7px;
 }
 
-.eyebrow-star {
-  padding-right: 6px;
-  color: var(--accent);
-  font-size: 14px;
-}
-
 .landing-hero h1 {
   margin: 0;
   color: var(--ink);
@@ -269,25 +263,6 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.8;
-}
-
-.hero-scribble {
-  position: absolute;
-  color: var(--accent);
-  font-size: 28px;
-}
-
-.hero-scribble-left {
-  top: 96px;
-  left: calc(50% - 255px);
-  transform: rotate(-14deg);
-}
-
-.hero-scribble-right {
-  right: calc(50% - 263px);
-  bottom: 80px;
-  font-size: 19px;
-  transform: rotate(12deg);
 }
 
 .hero-scroll-hint {
@@ -344,10 +319,6 @@
   font-weight: 600;
 }
 
-.landing-footer p span {
-  color: var(--accent);
-}
-
 .landing-footer small {
   align-self: center;
   color: #716c63;
@@ -385,16 +356,6 @@
 
   .desktop-break {
     display: none;
-  }
-
-  .hero-scribble-left {
-    top: 24px;
-    left: 10%;
-  }
-
-  .hero-scribble-right {
-    right: 10%;
-    bottom: 24px;
   }
 
   .landing-footer {

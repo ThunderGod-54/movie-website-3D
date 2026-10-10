@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { DoodleUniverse } from '../components/DoodleUniverse'
+import { MoviePosterBurst } from '../components/MoviePosterBurst'
 import { SignInModal } from '../components/SignInModal'
 import { useScrollActivation } from '../hooks/useDepthScroll'
 import './Landing.css'
@@ -67,29 +67,25 @@ function Landing() {
           className={`landing-hero ${isActivated ? 'is-scrolling' : ''}`}
           aria-labelledby="landing-title"
         >
-          <p className="eyebrow"><span className="eyebrow-star" aria-hidden="true">✳</span> YOUR NEIGHBOURHOOD PICTURE HOUSE</p>
+          <p className="eyebrow">YOUR NEIGHBOURHOOD PICTURE HOUSE</p>
           <h1 id="landing-title">A little <span>movie</span><br />magic, this way.</h1>
           <p className="hero-copy">Good stories. Comfy seats. Popcorn for the plot.<br className="desktop-break" /> Your next favourite night out starts here.</p>
           <Link className="enter-button" to="/lobby">
             <span>Enter the theatre</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" /></svg>
           </Link>
-          <span className="hero-scribble hero-scribble-left" aria-hidden="true">✳</span>
-          <span className="hero-scribble hero-scribble-right" aria-hidden="true">✳</span>
-
           <div className="hero-scroll-hint" aria-hidden="true">
             <span>Scroll to explore</span>
             <span className="scroll-hint-arrow">↓</span>
           </div>
         </section>
 
-        {/* Full-viewport background infinite doodle flight */}
-        <DoodleUniverse isActivated={isActivated} isModalOpen={isSignInOpen} />
+        <MoviePosterBurst isActivated={isActivated} isModalOpen={isSignInOpen} />
       </main>
 
       <footer className={`landing-footer ${isActivated ? 'is-ambient' : ''}`} id="about">
-        <p>Made for nights worth remembering <span aria-hidden="true">✳</span></p>
-        <small>Infinite cinema flight inspired by @nonzeroexitcode.</small>
+        <p>Made for nights worth remembering</p>
+        <small>A little movie magic, just for you.</small>
       </footer>
 
       {/* Cinematic Sign In Modal */}

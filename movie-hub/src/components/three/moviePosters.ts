@@ -29,4 +29,19 @@ export const moviePosters = [
     url: 'https://thumb.wikimedia.org/wikipedia/en/thumb/0/05/Obsession_theatrical_poster.jpeg/250px-Obsession_theatrical_poster.jpeg',
     fallbackColor: '#1a1a2e',
   },
+  {
+    title: 'Avatar: Fire and Ash',
+    url: 'https://resizing.flixster.com/Pq8B1yv0h4jocOwrukzjlvcdQDQ=/ems.cHJkLWVtcy1hc3NldHMvbW92aWVzLzRlNjBlZDhkLTg3NjItNDgzNy05OWYyLTE4ODI0MjBmMGU0OC5qcGc=',
+    fallbackColor: '#173f4c',
+  },
+  {
+    title: 'Demon Slayer: Infinity Castle',
+    url: 'https://m.media-amazon.com/images/M/MV5BOGQ3YWUzYjEtMTJiYy00ZjQ0LWI0YjktYjhiNGVhNGExYTM3XkEyXkFqcGc@._V1_.jpg',
+    fallbackColor: '#251c37',
+  },
+  {
+    title: 'Avengers: Doomsday',
+    url: 'https://m.media-amazon.com/images/M/MV5BNGEwYWZkN2UtOTQ5Mi00MGQzLWEzNjYtMWMyNDBkMTkzMWNkXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg',
+    fallbackColor: '#29272b',
+  },
 ] as const

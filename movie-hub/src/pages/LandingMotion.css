@@ -21,14 +21,6 @@
 	}
 }
 
-@keyframes depth-in-scribble {
-	from {
-		opacity: 0;
-		scale: 0.2;
-		rotate: -70deg;
-	}
-}
-
 .landing-hero:not(.is-scrolling) > .eyebrow,
 .landing-hero:not(.is-scrolling) > h1,
 .landing-hero:not(.is-scrolling) > .hero-copy,
@@ -43,37 +35,12 @@
 .landing-hero:not(.is-scrolling) > .enter-button { animation-delay: 0.48s; }
 .landing-hero:not(.is-scrolling) > .hero-scroll-hint { animation-delay: 0.62s; }
 
-/* Scribbles float gently in the hero space */
-.hero-scribble-left {
-	animation:
-		depth-in-scribble 0.9s var(--depth-ease) 0.75s backwards,
-		depth-float-left 5.2s ease-in-out 1.7s infinite alternate;
-}
-
-.hero-scribble-right {
-	animation:
-		depth-in-scribble 0.9s var(--depth-ease) 0.9s backwards,
-		depth-float-right 6.4s ease-in-out 2s infinite alternate;
-}
-
-@keyframes depth-float-left {
-	from { transform: rotate(-14deg) translateY(0); }
-	to { transform: rotate(-9deg) translateY(-8px); }
-}
-
-@keyframes depth-float-right {
-	from { transform: rotate(12deg) translateY(0); }
-	to { transform: rotate(7deg) translateY(8px); }
-}
-
 /* ---------------------------------------------------------------- *
  * Reduced motion accessibility
  * ---------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
-	.landing-hero > *,
-	.hero-scribble-left,
-	.hero-scribble-right {
+	.landing-hero > * {
 		animation: none !important;
 		scale: none !important;
 		translate: none !important;
