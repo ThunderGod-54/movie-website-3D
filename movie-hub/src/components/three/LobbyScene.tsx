@@ -10,24 +10,28 @@ type LobbySceneProps = {
 }
 
 const cameraPositions = [
-  // 0 — Now Showing: back from the poster wall, slightly elevated, centred
+  // 0 — Entrance: wide overview of the whole room
+  [0, 4.2, 12],
+  // 1 — Now Showing: back from the poster wall, slightly elevated, centred
   [0, 3.8, -1.5],
-  // 1 — Tickets: standing in front of ticket counter (counter is at [-5.55, 0, -1.6])
+  // 2 — Tickets: standing in front of ticket counter (counter is at [-5.55, 0, -1.6])
   [-2.8, 3.2, 0.8],
-  // 2 — Popcorn: standing in front of popcorn stand (stand is at [5.2, 0, -2.1])
+  // 3 — Popcorn: standing in front of popcorn stand (stand is at [5.2, 0, -2.1])
   [2.4, 3.2, 0.4],
-  // 3 — Screens door: pulled back from corner, looking at door (door at [4.25, 0, -7.55])
+  // 4 — Screens door: pulled back from corner, looking at door (door at [4.25, 0, -7.55])
   [0.5, 3.5, -4.2],
 ] as const
 
 const cameraTargets = [
-  // 0 — Looking straight at the poster wall
+  // 0 — Wide room: look toward the centre of the room
+  [0, 2.3, -2.1],
+  // 1 — Looking straight at the poster wall
   [0, 2.8, -7.7],
-  // 1 — Looking at the ticket counter face
+  // 2 — Looking at the ticket counter face
   [-5.2, 2.1, -1.6],
-  // 2 — Looking at the popcorn stand
+  // 3 — Looking at the popcorn stand
   [5.2, 2.4, -2.1],
-  // 3 — Looking at the screens door
+  // 4 — Looking at the screens door
   [4.25, 1.9, -7.55],
 ] as const
 
@@ -316,30 +320,20 @@ function TicketCounter() {
 function PopcornStand() {
   return (
     <group position={[5.2, 0, -2.1]}>
-      {/* Cylinder segments: 8 is fine for this distance */}
-      <mesh position={[0, 0.68, 0]} castShadow>
-        <cylinderGeometry args={[0.85, 0.72, 1.35, 8]} />
-        <meshToonMaterial color="#e2bd82" />
-        <Outline />
-      </mesh>
-      <mesh position={[0, 1.38, 0]} castShadow>
-        <cylinderGeometry args={[0.9, 0.9, 0.16, 8]} />
-        <meshToonMaterial color="#bd5342" />
-        <Outline />
-      </mesh>
-      <mesh position={[0, 2.25, 0]} castShadow>
+      {/* Box sits on the floor: height 1.45, so centre at y=0.725 */}
+      <mesh position={[0, 0.725, 0]} castShadow>
         <boxGeometry args={[1.65, 1.45, 1.05]} />
         <meshToonMaterial color="#83a098" />
         <Outline />
       </mesh>
-      <mesh position={[0, 2.25, 0.55]}>
+      <mesh position={[0, 0.725, 0.55]}>
         <planeGeometry args={[1.22, 0.72]} />
         <meshToonMaterial color="#f2e5ce" />
       </mesh>
-      <CanvasLabel text="POPCORN" position={[0, 2.3, 0.57]} size={[1.08, 0.25]} color="#344843" fontSize={88} />
-      {/* Dodecahedron detail 0→0, segments already at minimum */}
+      <CanvasLabel text="POPCORN" position={[0, 0.77, 0.57]} size={[1.08, 0.25]} color="#344843" fontSize={88} />
+      {/* Popcorn pieces on top of the box (box top = y 0 + 0.725 + 0.725 = 1.45) */}
       {popcornPositions.map(([x, y, z], i) => (
-        <mesh key={i} position={[x, y, z]} castShadow>
+        <mesh key={i} position={[x, y - 1.75, z]} castShadow>
           <dodecahedronGeometry args={[0.27, 0]} />
           <meshToonMaterial color="#fff2d4" />
           <Outline />
@@ -503,7 +497,6 @@ function LobbyScene({ activeStop, pointerRef }: LobbySceneProps) {
       <PopcornStand />
       <ScreensDoor />
       <FloatingTicket />
-      <FloatingReel />
       <HangingLights />
       <CameraRig activeStop={activeStop} pointerRef={pointerRef} />
     </>

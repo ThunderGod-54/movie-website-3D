@@ -5,16 +5,17 @@ import LobbyScene from '../components/three/LobbyScene'
 import './Home.css'
 
 const stops = [
-  { name: 'Now showing' },
-  { name: 'Tickets' },
-  { name: 'Popcorn' },
-  { name: 'Screens' },
+  { name: 'Welcome',      icon: '✳' },
+  { name: 'Now showing',  icon: '🎬' },
+  { name: 'Tickets',      icon: '🎟' },
+  { name: 'Popcorn',      icon: '🍿' },
+  { name: 'Screens',      icon: '🚪' },
 ]
 
-const fallbackMovies = [
-  { title: 'The Odyssey', meta: 'Epic · 2h 50m', color: 'sage' },
+const nowShowingMovies = [
+  { title: 'The Odyssey',              meta: 'Epic · 2h 50m',    color: 'sage'  },
   { title: 'Spider-Man: Brand New Day', meta: 'Action · 2h 15m', color: 'coral' },
-  { title: 'F1', meta: 'Drama · 2h 10m', color: 'blue' },
+  { title: 'F1',                        meta: 'Drama · 2h 10m',  color: 'blue'  },
 ]
 
 function supportsWebGL(): boolean {
@@ -28,15 +29,19 @@ function supportsWebGL(): boolean {
 
 function Home() {
   const [webglAvailable] = useState<boolean>(() => supportsWebGL())
-  const [activeStop, setActiveStop] = useState(0)
-  const [showList, setShowList] = useState(false)
-  const pointerRef = useRef({ x: 0, y: 0 })
-  const gestureStartRef = useRef<number | null>(null)
-  // Debounce wheel so rapid scrolls don't skip multiple stops at once
+  const [activeStop, setActiveStop]   = useState(0)
+  const [drawerOpen, setDrawerOpen]   = useState(false)
+  const pointerRef       = useRef({ x: 0, y: 0 })
+  const gestureStartRef  = useRef<number | null>(null)
   const wheelCooldownRef = useRef(false)
 
   function moveStop(direction: number) {
     setActiveStop((current) => (current + direction + stops.length) % stops.length)
+  }
+
+  function goToStop(index: number) {
+    setActiveStop(index)
+    setDrawerOpen(false)
   }
 
   function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
@@ -62,11 +67,8 @@ function Home() {
     if (Math.abs(event.deltaY) <= 10 || wheelCooldownRef.current) return
     wheelCooldownRef.current = true
     moveStop(event.deltaY > 0 ? 1 : -1)
-    // 500ms cooldown prevents blasting through all stops on a trackpad flick
     setTimeout(() => { wheelCooldownRef.current = false }, 500)
   }
-
-  const canRender = webglAvailable === true && !showList
 
   return (
     <main
@@ -76,26 +78,34 @@ function Home() {
       onPointerUp={handlePointerUp}
       onWheel={handleWheel}
     >
+      {/* ── Top header ─────────────────────────────────────────── */}
       <header className="lobby-header">
         <Link className="lobby-home-link" to="/" aria-label="Return to Goodshow home">
           <span aria-hidden="true">←</span> Goodshow
         </Link>
         <p className="lobby-header-note"><span aria-hidden="true">✳</span> THE PICTURE HOUSE</p>
-        <button className="lobby-list-toggle" type="button" onClick={() => setShowList((value) => !value)}>
-          {showList ? 'Return to room' : 'Skip to list'}
+        <button
+          className="lobby-menu-btn"
+          type="button"
+          aria-label={drawerOpen ? 'Close navigation' : 'Open navigation'}
+          aria-expanded={drawerOpen}
+          onClick={() => setDrawerOpen((v) => !v)}
+        >
+          <span className={`hamburger ${drawerOpen ? 'is-open' : ''}`}>
+            <span /><span /><span />
+          </span>
         </button>
       </header>
 
+      {/* ── 3-D stage ──────────────────────────────────────────── */}
       <div className="lobby-stage" aria-label="Interactive theatre lobby">
-        {canRender && (
+        {webglAvailable && (
           <Canvas
             className="lobby-canvas"
-            // Cap DPR at 1.5 — 2× is expensive on mobile with negligible visual gain
             dpr={[1, 1.5]}
             camera={{ position: [0, 4.2, 12], fov: 42, near: 0.1, far: 100 }}
             gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
             shadows
-            // frameloop="demand" would save power but camera rig needs continuous updates
             frameloop="always"
           >
             <color attach="background" args={['#d7d2c4']} />
@@ -103,11 +113,7 @@ function Home() {
           </Canvas>
         )}
 
-        {webglAvailable === null && !showList && (
-          <div className="lobby-loading" role="status"><span>✳</span> Turning on the lights...</div>
-        )}
-
-        {(!webglAvailable || showList) && (
+        {!webglAvailable && (
           <section className="lobby-list-view" aria-labelledby="list-title">
             <div className="list-view-heading">
               <span className="list-view-kicker">AT THE PICTURE HOUSE</span>
@@ -115,7 +121,7 @@ function Home() {
               <p>Pick a story for tonight.</p>
             </div>
             <div className="fallback-movies">
-              {fallbackMovies.map((movie, index) => (
+              {nowShowingMovies.map((movie, index) => (
                 <article className={`fallback-movie fallback-movie-${movie.color}`} key={movie.title}>
                   <span className="fallback-movie-number">0{index + 1}</span>
                   <div>
@@ -126,19 +132,67 @@ function Home() {
                 </article>
               ))}
             </div>
-            {!webglAvailable && <p className="webgl-note">The 3D room is unavailable in this browser, so here is the movie list instead.</p>}
+            <p className="webgl-note">The 3D room is unavailable in this browser.</p>
           </section>
         )}
 
-        {webglAvailable && !showList && (
-          <>
-            <div className="lobby-scene-caption" aria-live="polite">
-              <span className="caption-overline">TAKE A LOOK AROUND</span>
-              <strong>{stops[activeStop].name}</strong>
-            </div>
-          </>
+        {/* current stop label — bottom-left */}
+        {webglAvailable && (
+          <div className="lobby-scene-caption" aria-live="polite">
+            <span className="caption-overline">TAKE A LOOK AROUND</span>
+            <strong>{stops[activeStop].name}</strong>
+          </div>
         )}
       </div>
+
+      {/* ── Side drawer overlay ─────────────────────────────────── */}
+      {drawerOpen && (
+        <div
+          className="drawer-backdrop"
+          aria-hidden="true"
+          onClick={() => setDrawerOpen(false)}
+        />
+      )}
+
+      <nav
+        className={`lobby-drawer ${drawerOpen ? 'is-open' : ''}`}
+        aria-label="Theatre navigation"
+        aria-hidden={!drawerOpen}
+      >
+        <p className="drawer-heading">EXPLORE</p>
+
+        <ul className="drawer-stops" role="list">
+          {stops.map((stop, index) => (
+            <li key={stop.name}>
+              <button
+                className={`drawer-stop-btn ${index === activeStop ? 'is-active' : ''}`}
+                type="button"
+                onClick={() => goToStop(index)}
+                aria-current={index === activeStop ? 'step' : undefined}
+              >
+                <span className="drawer-stop-icon" aria-hidden="true">{stop.icon}</span>
+                <span className="drawer-stop-name">{stop.name}</span>
+                <span className="drawer-stop-arrow" aria-hidden="true">→</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+
+        <div className="drawer-movies">
+          <p className="drawer-movies-label">NOW SHOWING</p>
+          {nowShowingMovies.map((m) => (
+            <div className="drawer-movie-row" key={m.title}>
+              <span className={`drawer-movie-dot drawer-movie-dot-${m.color}`} aria-hidden="true" />
+              <div>
+                <p className="drawer-movie-title">{m.title}</p>
+                <p className="drawer-movie-meta">{m.meta}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="drawer-hint">Scroll · Swipe · Wander</p>
+      </nav>
     </main>
   )
 }
