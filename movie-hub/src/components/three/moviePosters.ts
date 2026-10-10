@@ -44,4 +44,19 @@ export const moviePosters = [
     url: 'https://m.media-amazon.com/images/M/MV5BNGEwYWZkN2UtOTQ5Mi00MGQzLWEzNjYtMWMyNDBkMTkzMWNkXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg',
     fallbackColor: '#29272b',
   },
+  {
+    title: 'Fast & Furious',
+    url: 'https://upload.wikimedia.org/wikipedia/en/8/8f/Fast_and_Furious_Poster.jpg',
+    fallbackColor: '#252525',
+  },
+  {
+    title: 'Michael',
+    url: 'https://resizing.flixster.com/hcHFyHYxNIIgMilY0mC2JoIhggk=/ems.cHJkLWVtcy1hc3NldHMvbW92aWVzL2JlYTIxNGM2LTkyZmEtNDJlMC05ODA4LWQ3YTBjYzE2MzQzNi5qcGc=',
+    fallbackColor: '#30251f',
+  },
+  {
+    title: 'Pacific Rim',
+    url: 'https://resizing.flixster.com/-XZAfHZM39UwaGJIFWKAE8fS0ak=/v3/t/assets/p9360990_p_v13_au.jpg',
+    fallbackColor: '#172d3c',
+  },
 ] as const

@@ -37,12 +37,11 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: clamp(110px, 14vw, 190px);
+  width: clamp(150px, 19vw, 250px);
   aspect-ratio: 0.68;
-  padding: 6px 6px 24px;
   overflow: hidden;
   border: 1px solid rgba(237, 214, 168, 0.72);
-  border-radius: 4px;
+  border-radius: 6px;
   box-shadow: 0 18px 45px rgba(15, 12, 18, 0.42);
   transform-style: preserve-3d;
   will-change: transform, opacity;
@@ -53,6 +52,8 @@
 
 .movie-poster-card img {
   display: block;
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -61,9 +62,10 @@
 
 .movie-poster-card span {
   position: absolute;
-  right: 6px;
-  bottom: 5px;
-  left: 6px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 18px 7px 7px;
   overflow: hidden;
   color: #fff8e8;
   font-family: var(--hand);
@@ -72,13 +74,14 @@
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.9);
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.82));
   pointer-events: none;
 }
 
 @media (max-width: 640px) {
   .movie-poster-card {
-    width: clamp(90px, 23vw, 140px);
+    width: clamp(120px, 32vw, 190px);
   }
 }
 

@@ -59,15 +59,18 @@ export function MoviePosterBurst({ isActivated, isModalOpen = false }: MoviePost
       const posterCount = moviePosters.length
       
       const posterLayout = [
-        [-0.36, -0.05],
-        [0.36, 0.12],
-        [-0.39, 0.24],
-        [0.39, -0.24],
-        [-0.29, 0.4],
-        [0.29, 0.4],
-        [-0.15, -0.35],
-        [0.15, 0.35],
-        [0.0, 0.0],
+        [-0.42, -0.28],
+        [0.42, -0.28],
+        [-0.36, -0.06],
+        [0.36, -0.06],
+        [-0.42, 0.2],
+        [0.42, 0.2],
+        [-0.34, 0.4],
+        [0.34, 0.4],
+        [-0.46, 0.02],
+        [0.46, 0.02],
+        [-0.38, 0.32],
+        [0.38, -0.36],
       ]
 
       for (let i = 0; i < posterCount; i++) {
@@ -92,7 +95,7 @@ export function MoviePosterBurst({ isActivated, isModalOpen = false }: MoviePost
         const drift = Math.sin(progress * Math.PI * 2 + i) * 24
         const rotation = Math.sin(progress * Math.PI * 2 + i * 2) * 5
         
-        poster.style.transform = `translate3d(${(window.innerWidth * xRatio + drift).toFixed(1)}px, ${(window.innerHeight * yRatio).toFixed(1)}px, ${z.toFixed(1)}px) translate(-50%, -50%) scale(0.72) rotate(${rotation.toFixed(1)}deg)`
+        poster.style.transform = `translate3d(${(window.innerWidth * xRatio + drift).toFixed(1)}px, ${(window.innerHeight * yRatio).toFixed(1)}px, ${z.toFixed(1)}px) translate(-50%, -50%) scale(0.9) rotate(${rotation.toFixed(1)}deg)`
         poster.style.opacity = opacity.toFixed(3)
       }
 
