@@ -9,6 +9,7 @@ type LobbySceneProps = {
   activeStop: number
   pointerRef: RefObject<{ x: number; y: number }>
   onTicketClick: () => void
+  onFoodClick: () => void
 }
 
 const cameraPositions = [
@@ -451,9 +452,14 @@ function TicketCounter({ onClick }: { onClick: () => void }) {
 // ---------------------------------------------------------------------------
 // Food Court — compact size, fits fully in frame
 // ---------------------------------------------------------------------------
-function FoodCourtCounter() {
+function FoodCourtCounter({ onClick }: { onClick: () => void }) {
   return (
-    <group position={[4.8, 0, -1.8]}>
+    <group
+      position={[4.8, 0, -1.8]}
+      onClick={(e) => { e.stopPropagation(); onClick() }}
+      onPointerOver={() => { document.body.style.cursor = 'pointer' }}
+      onPointerOut={() => { document.body.style.cursor = 'auto' }}
+    >
       {/* Counter body */}
       <mesh position={[0, 0.72, 0]} castShadow receiveShadow>
         <boxGeometry args={[2.8, 1.44, 0.8]} />
@@ -835,7 +841,7 @@ function CameraRig({ activeStop, pointerRef }: Pick<LobbySceneProps, 'activeStop
   return null
 }
 
-function LobbyScene({ activeStop, pointerRef, onTicketClick }: LobbySceneProps) {
+function LobbyScene({ activeStop, pointerRef, onTicketClick, onFoodClick }: LobbySceneProps) {
   return (
     <>
       <ambientLight intensity={1.7} />
@@ -844,7 +850,7 @@ function LobbyScene({ activeStop, pointerRef, onTicketClick }: LobbySceneProps) 
       <Room />
       <PosterWall />
       <TicketCounter onClick={onTicketClick} />
-      <FoodCourtCounter />
+      <FoodCourtCounter onClick={onFoodClick} />
       <ScreensDoor />
       <FloatingTicket />
       <HangingLights />

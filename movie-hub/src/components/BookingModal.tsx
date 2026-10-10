@@ -2,26 +2,52 @@ import { useState } from 'react'
 import './BookingModal.css'
 
 const movies = [
-  { id: 'odyssey',  title: 'The Odyssey',               genre: 'Epic',   duration: '2h 50m', rating: 'U/A' },
-  { id: 'spidey',   title: 'Spider-Man: Brand New Day',  genre: 'Action', duration: '2h 15m', rating: 'U/A' },
-  { id: 'f1',       title: 'F1',                         genre: 'Drama',  duration: '2h 10m', rating: 'U'   },
-  { id: 'hailmary', title: 'Project Hail Mary',          genre: 'Sci-Fi', duration: '2h 28m', rating: 'U/A' },
-  { id: 'dhura2',   title: 'Dhurandhar 2',               genre: 'Action', duration: '2h 35m', rating: 'UA'  },
-  { id: 'obsess',   title: 'Obsession',                  genre: 'Thriller','duration': '1h 58m', rating: 'A' },
+  { id: 'odyssey',  title: 'The Odyssey',               genre: 'Epic',     duration: '2h 50m', rating: 'U/A' },
+  { id: 'spidey',   title: 'Spider-Man: Brand New Day',  genre: 'Action',   duration: '2h 15m', rating: 'U/A' },
+  { id: 'f1',       title: 'F1',                         genre: 'Drama',    duration: '2h 10m', rating: 'U'   },
+  { id: 'hailmary', title: 'Project Hail Mary',          genre: 'Sci-Fi',   duration: '2h 28m', rating: 'U/A' },
+  { id: 'dhura2',   title: 'Dhurandhar 2',               genre: 'Action',   duration: '2h 35m', rating: 'UA'  },
+  { id: 'obsess',   title: 'Obsession',                  genre: 'Thriller', duration: '1h 58m', rating: 'A'   },
 ]
 
 const showtimes = ['10:30 AM', '1:15 PM', '4:00 PM', '7:30 PM', '10:45 PM']
 
-const ROWS = ['A','B','C','D','E','F','G','H']
+const ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
 const COLS = 10
 
-// Generate a stable pseudo-random sold-out pattern
 function isSold(row: string, col: number): boolean {
   const seed = (row.charCodeAt(0) * 7 + col * 13) % 17
   return seed < 5
 }
 
-type Step = 'movie' | 'showtime' | 'seats' | 'confirm'
+// ── Success chime via Web Audio API ──────────────────────────────────────────
+function playSuccessChime() {
+  try {
+    const ctx = new AudioContext()
+    // Three ascending notes — C5, E5, G5
+    const notes = [523.25, 659.25, 783.99]
+    notes.forEach((freq, i) => {
+      const osc  = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.type = 'sine'
+      osc.frequency.value = freq
+      const t = ctx.currentTime + i * 0.13
+      gain.gain.setValueAtTime(0, t)
+      gain.gain.linearRampToValueAtTime(0.28, t + 0.04)
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55)
+      osc.start(t)
+      osc.stop(t + 0.56)
+    })
+    // Close context after last note fades
+    setTimeout(() => ctx.close(), 1200)
+  } catch {
+    // AudioContext blocked or unavailable — fail silently
+  }
+}
+
+type Step = 'movie' | 'showtime' | 'seats' | 'confirm' | 'success'
 
 type BookingState = {
   movie: string | null
@@ -29,11 +55,18 @@ type BookingState = {
   seats: string[]
 }
 
-export default function BookingModal({ onClose }: { onClose: () => void }) {
-  const [step, setStep] = useState<Step>('movie')
+type Props = {
+  onClose: () => void
+  onGoToFood: () => void
+}
+
+export default function BookingModal({ onClose, onGoToFood }: Props) {
+  const [step, setStep]       = useState<Step>('movie')
   const [booking, setBooking] = useState<BookingState>({ movie: null, showtime: null, seats: [] })
 
   const selectedMovie = movies.find(m => m.id === booking.movie)
+  const total         = booking.seats.length * 280
+  const stepIndex     = ['movie', 'showtime', 'seats', 'confirm'].indexOf(step)
 
   function selectMovie(id: string) {
     setBooking(b => ({ ...b, movie: id }))
@@ -56,23 +89,71 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
 
   function goBack() {
     if (step === 'showtime') setStep('movie')
-    else if (step === 'seats')    setStep('showtime')
-    else if (step === 'confirm')  setStep('seats')
+    else if (step === 'seats')   setStep('showtime')
+    else if (step === 'confirm') setStep('seats')
   }
 
-  const stepIndex = ['movie', 'showtime', 'seats', 'confirm'].indexOf(step)
+  function handleConfirm() {
+    playSuccessChime()
+    setStep('success')
+  }
 
+  function handleGoFood() {
+    onClose()
+    onGoToFood()
+  }
+
+  // ── Success screen ──────────────────────────────────────────────────────────
+  if (step === 'success') {
+    return (
+      <div className="bm-backdrop" onClick={onClose}>
+        <div className="bm-modal bm-modal--success" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+          <button className="bm-close-btn bm-close-btn--abs" onClick={onClose} aria-label="Close">✕</button>
+
+          <div className="bm-success-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="30" stroke="#4caf82" strokeWidth="3" />
+              <path d="M18 32l10 10 18-18" stroke="#4caf82" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+
+          <h2 className="bm-success-title">Booking Confirmed!</h2>
+          <p className="bm-success-sub">Your tickets are locked in. See you at the show.</p>
+
+          <div className="bm-success-ticket">
+            <p className="bm-confirm-kicker">✳ GOODSHOW CINEMA</p>
+            <h3 className="bm-confirm-movie">{selectedMovie?.title}</h3>
+            <div className="bm-confirm-rows">
+              <div className="bm-confirm-row"><span>Show</span><span>{booking.showtime}</span></div>
+              <div className="bm-confirm-row"><span>Seats</span><span>{booking.seats.join(', ')}</span></div>
+              <div className="bm-confirm-row"><span>Paid</span><span className="bm-confirm-price">₹{total}</span></div>
+            </div>
+          </div>
+
+          <div className="bm-success-actions">
+            <div className="bm-food-prompt">
+              <p className="bm-food-prompt-text">🍿 Want to pre-order from the Food Court?</p>
+              <button className="bm-food-btn" onClick={handleGoFood}>
+                Head to Food Court →
+              </button>
+            </div>
+            <button className="bm-done-btn" onClick={onClose}>Done</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Main booking flow ───────────────────────────────────────────────────────
   return (
     <div className="bm-backdrop" onClick={onClose}>
       <div className="bm-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Book tickets">
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="bm-header">
           <div className="bm-header-left">
             {step !== 'movie' && (
-              <button className="bm-back-btn" onClick={goBack} aria-label="Go back">
-                ← Back
-              </button>
+              <button className="bm-back-btn" onClick={goBack} aria-label="Go back">← Back</button>
             )}
           </div>
           <h2 className="bm-title">
@@ -84,7 +165,7 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
           <button className="bm-close-btn" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
-        {/* ── Step indicator ── */}
+        {/* Step indicator */}
         <div className="bm-steps" aria-label="Booking progress">
           {['Film', 'Time', 'Seats', 'Confirm'].map((label, i) => (
             <div key={label} className={`bm-step ${i <= stepIndex ? 'is-done' : ''} ${i === stepIndex ? 'is-active' : ''}`}>
@@ -94,10 +175,9 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
           ))}
         </div>
 
-        {/* ── Step content ── */}
+        {/* Body */}
         <div className="bm-body">
 
-          {/* STEP 1 — Movie */}
           {step === 'movie' && (
             <ul className="bm-movie-list" role="list">
               {movies.map(m => (
@@ -121,7 +201,6 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
             </ul>
           )}
 
-          {/* STEP 2 — Showtime */}
           {step === 'showtime' && (
             <div>
               <p className="bm-section-label">TODAY · GOODSHOW CINEMA</p>
@@ -139,7 +218,6 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
             </div>
           )}
 
-          {/* STEP 3 — Seat picker */}
           {step === 'seats' && (
             <div className="bm-seat-section">
               <div className="bm-screen-label">SCREEN</div>
@@ -172,41 +250,29 @@ export default function BookingModal({ onClose }: { onClose: () => void }) {
               {booking.seats.length > 0 && (
                 <div className="bm-seat-footer">
                   <span>{booking.seats.length} seat{booking.seats.length > 1 ? 's' : ''} — {booking.seats.join(', ')}</span>
-                  <button className="bm-proceed-btn" onClick={() => setStep('confirm')}>
-                    Proceed →
-                  </button>
+                  <button className="bm-proceed-btn" onClick={() => setStep('confirm')}>Proceed →</button>
                 </div>
               )}
             </div>
           )}
 
-          {/* STEP 4 — Confirm */}
           {step === 'confirm' && (
             <div className="bm-confirm">
               <div className="bm-confirm-card">
                 <p className="bm-confirm-kicker">✳ GOODSHOW CINEMA</p>
                 <h3 className="bm-confirm-movie">{selectedMovie?.title}</h3>
                 <div className="bm-confirm-rows">
-                  <div className="bm-confirm-row">
-                    <span>Date</span><span>Today</span>
-                  </div>
-                  <div className="bm-confirm-row">
-                    <span>Show</span><span>{booking.showtime}</span>
-                  </div>
-                  <div className="bm-confirm-row">
-                    <span>Seats</span><span>{booking.seats.join(', ')}</span>
-                  </div>
+                  <div className="bm-confirm-row"><span>Date</span><span>Today</span></div>
+                  <div className="bm-confirm-row"><span>Show</span><span>{booking.showtime}</span></div>
+                  <div className="bm-confirm-row"><span>Seats</span><span>{booking.seats.join(', ')}</span></div>
                   <div className="bm-confirm-row">
                     <span>Total</span>
-                    <span className="bm-confirm-price">₹{booking.seats.length * 280}</span>
+                    <span className="bm-confirm-price">₹{total}</span>
                   </div>
                 </div>
               </div>
-              <button
-                className="bm-confirm-btn"
-                onClick={() => { alert('Booking confirmed! 🎟'); onClose() }}
-              >
-                Confirm &amp; Pay ₹{booking.seats.length * 280}
+              <button className="bm-confirm-btn" onClick={handleConfirm}>
+                Confirm &amp; Pay ₹{total}
               </button>
             </div>
           )}

@@ -2,6 +2,7 @@ import { Canvas } from '@react-three/fiber'
 import { useRef, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import BookingModal from '../components/BookingModal'
+import FoodModal from '../components/FoodModal'
 import LobbyScene from '../components/three/LobbyScene'
 import './Home.css'
 
@@ -29,11 +30,19 @@ function supportsWebGL(): boolean {
 }
 
 function Home() {
-  const [webglAvailable]            = useState<boolean>(() => supportsWebGL())
-  const [activeStop, setActiveStop] = useState(0)
-  const [menuOpen,   setMenuOpen]   = useState(false)
+  const [webglAvailable]              = useState<boolean>(() => supportsWebGL())
+  const [activeStop, setActiveStop]   = useState(0)
+  const [menuOpen,   setMenuOpen]     = useState(false)
   const [bookingOpen, setBookingOpen] = useState(false)
-  const frameloop = menuOpen || bookingOpen ? 'demand' : 'always'
+  const [foodOpen,    setFoodOpen]    = useState(false)
+  const frameloop = menuOpen || bookingOpen || foodOpen ? 'demand' : 'always'
+
+  // FOOD_COURT is stop index 3
+  function openFoodCourt() {
+    setActiveStop(3)
+    // slight delay so camera starts moving before modal appears
+    setTimeout(() => setFoodOpen(true), 400)
+  }
   const pointerRef                  = useRef({ x: 0, y: 0 })
   const gestureStartRef             = useRef<number | null>(null)
   const wheelCooldownRef            = useRef(false)
