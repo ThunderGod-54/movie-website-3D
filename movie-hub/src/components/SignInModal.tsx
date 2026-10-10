@@ -300,12 +300,18 @@ export function SignInModal({
       className="signin-overlay"
       ref={overlayRef}
       onClick={handleStartClose}
+      onWheel={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
       role="presentation"
     >
       <div
         className="signin-modal-card"
         ref={cardRef}
         onClick={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="signin-modal-title"

@@ -78,11 +78,20 @@ export default function BookingModal({ onClose, onGoToFood, initialMovieId }: Pr
   } = useAuthStore()
 
   const [step, setStep] = useState<Step>(() => {
-    if (initialMovieId) return 'showtime'
+    if (pendingBooking?.seats.length) return 'confirm'
+    if (pendingBooking?.showtime) return 'seats'
+    if (initialMovieId || pendingBooking?.movieId) return 'showtime'
     return 'movie'
   })
 
   const [booking, setBooking] = useState<BookingState>(() => {
+    if (pendingBooking) {
+      return {
+        movie: pendingBooking.movieId,
+        showtime: pendingBooking.showtime,
+        seats: pendingBooking.seats,
+      }
+    }
     if (initialMovieId) {
       return { movie: initialMovieId, showtime: null, seats: [] }
     }
@@ -91,21 +100,24 @@ export default function BookingModal({ onClose, onGoToFood, initialMovieId }: Pr
 
   const [confirmedReference, setConfirmedReference] = useState<string>('')
 
-  // Resume pending booking automatically upon authentication
+  // Resume pending booking automatically upon authentication via external store subscription
   useEffect(() => {
-    if (pendingBooking) {
-      setBooking({
-        movie: pendingBooking.movieId,
-        showtime: pendingBooking.showtime,
-        seats: pendingBooking.seats,
-      })
-      if (pendingBooking.seats.length > 0) {
-        setStep('confirm')
-      } else if (pendingBooking.showtime) {
-        setStep('seats')
+    const unsub = useAuthStore.subscribe((state, prevState) => {
+      if (state.pendingBooking && state.pendingBooking !== prevState.pendingBooking) {
+        setBooking({
+          movie: state.pendingBooking.movieId,
+          showtime: state.pendingBooking.showtime,
+          seats: state.pendingBooking.seats,
+        })
+        if (state.pendingBooking.seats.length > 0) {
+          setStep('confirm')
+        } else if (state.pendingBooking.showtime) {
+          setStep('seats')
+        }
       }
-    }
-  }, [pendingBooking])
+    })
+    return unsub
+  }, [])
 
   const selectedMovie = movies.find((m) => m.id === booking.movie)
   const total = booking.seats.length * 280

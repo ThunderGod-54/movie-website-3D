@@ -41,7 +41,8 @@ function Home() {
   const [searchOpen,  setSearchOpen]  = useState(false)
   const [selectedMovieForBooking, setSelectedMovieForBooking] = useState<string | null>(null)
 
-  const frameloop = menuOpen || bookingOpen || foodOpen || searchOpen ? 'demand' : 'always'
+  const isAnyModalOpen = menuOpen || bookingOpen || foodOpen || searchOpen
+  const frameloop = isAnyModalOpen ? 'demand' : 'always'
 
   // FOOD_COURT is stop index 3
   function openFoodCourt() {
@@ -56,7 +57,7 @@ function Home() {
   const toggleMenu = useCallback(() => setMenuOpen((v) => !v), [])
 
   function moveStop(direction: number) {
-    if (insideAuditorium) return
+    if (insideAuditorium || isAnyModalOpen) return
     setActiveStop((c) => (c + direction + stops.length) % stops.length)
   }
 
@@ -66,27 +67,30 @@ function Home() {
     setMenuOpen(false)
   }
 
-  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
-    const b = event.currentTarget.getBoundingClientRect()
+  const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (isAnyModalOpen) return
+    const w = window.innerWidth || 1
+    const h = window.innerHeight || 1
     pointerRef.current = {
-      x: ((event.clientX - b.left) / b.width) * 2 - 1,
-      y: 1 - ((event.clientY - b.top) / b.height) * 2,
+      x: (event.clientX / w) * 2 - 1,
+      y: 1 - (event.clientY / h) * 2,
     }
-  }
+  }, [isAnyModalOpen])
 
   function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    if (isAnyModalOpen) return
     if (event.pointerType === 'touch') gestureStartRef.current = event.clientX
   }
 
   function handlePointerUp(event: React.PointerEvent<HTMLDivElement>) {
-    if (gestureStartRef.current === null) return
+    if (isAnyModalOpen || gestureStartRef.current === null) return
     const distance = event.clientX - gestureStartRef.current
     gestureStartRef.current = null
     if (Math.abs(distance) > 55) moveStop(distance < 0 ? 1 : -1)
   }
 
   function handleWheel(event: React.WheelEvent<HTMLDivElement>) {
-    if (Math.abs(event.deltaY) <= 10 || wheelCooldownRef.current) return
+    if (isAnyModalOpen || Math.abs(event.deltaY) <= 10 || wheelCooldownRef.current) return
     wheelCooldownRef.current = true
     moveStop(event.deltaY > 0 ? 1 : -1)
     setTimeout(() => { wheelCooldownRef.current = false }, 500)

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { CINEMA_CATALOGUE, type Movie } from '../data/movies'
 import './SearchModal.css'
@@ -16,15 +16,21 @@ export function SearchModal({ isOpen, onClose, onSelectMovie }: SearchModalProps
   const [selectedGenre, setSelectedGenre] = useState('All')
   const inputRef = useRef<HTMLInputElement>(null)
   const modalRef = useRef<HTMLDivElement>(null)
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const resultsListRef = useRef<HTMLDivElement>(null)
+
+  const handleClose = useCallback(() => {
+    setQuery('')
+    setSelectedGenre('All')
+    onClose()
+  }, [onClose])
 
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         inputRef.current?.focus()
       }, 50)
-    } else {
-      setQuery('')
-      setSelectedGenre('All')
+      return () => clearTimeout(timer)
     }
   }, [isOpen])
 
@@ -32,12 +38,52 @@ export function SearchModal({ isOpen, onClose, onSelectMovie }: SearchModalProps
     if (!isOpen) return
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        handleClose()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
+  }, [isOpen, handleClose])
+
+  // Prevent background scroll leaking and isolate native pointer/wheel events
+  useEffect(() => {
+    if (!isOpen) return
+
+    const originalOverflow = document.body.style.overflow
+    const originalTouchAction = document.body.style.touchAction
+    document.body.style.overflow = 'hidden'
+    document.body.style.touchAction = 'none'
+
+    const overlay = overlayRef.current
+    const stopPropagation = (e: Event) => {
+      e.stopPropagation()
+    }
+
+    if (overlay) {
+      overlay.addEventListener('wheel', stopPropagation, { passive: true })
+      overlay.addEventListener('touchstart', stopPropagation, { passive: true })
+      overlay.addEventListener('touchmove', stopPropagation, { passive: true })
+      overlay.addEventListener('touchend', stopPropagation, { passive: true })
+      overlay.addEventListener('pointerdown', stopPropagation)
+      overlay.addEventListener('pointermove', stopPropagation)
+      overlay.addEventListener('pointerup', stopPropagation)
+    }
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+      document.body.style.touchAction = originalTouchAction
+
+      if (overlay) {
+        overlay.removeEventListener('wheel', stopPropagation)
+        overlay.removeEventListener('touchstart', stopPropagation)
+        overlay.removeEventListener('touchmove', stopPropagation)
+        overlay.removeEventListener('touchend', stopPropagation)
+        overlay.removeEventListener('pointerdown', stopPropagation)
+        overlay.removeEventListener('pointermove', stopPropagation)
+        overlay.removeEventListener('pointerup', stopPropagation)
+      }
+    }
+  }, [isOpen])
 
   const filteredMovies = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -56,16 +102,39 @@ export function SearchModal({ isOpen, onClose, onSelectMovie }: SearchModalProps
   if (!isOpen) return null
 
   const handleBookClick = (movie: Movie) => {
-    onClose()
+    handleClose()
     onSelectMovie(movie)
   }
 
+  const stopReactProp = (e: React.SyntheticEvent) => {
+    e.stopPropagation()
+  }
+
   const modalContent = (
-    <div className="search-overlay" onClick={onClose} role="presentation">
+    <div
+      ref={overlayRef}
+      className="search-overlay"
+      onClick={handleClose}
+      onWheel={stopReactProp}
+      onTouchStart={stopReactProp}
+      onTouchMove={stopReactProp}
+      onTouchEnd={stopReactProp}
+      onPointerDown={stopReactProp}
+      onPointerMove={stopReactProp}
+      onPointerUp={stopReactProp}
+      role="presentation"
+    >
       <div
         className="search-card"
         ref={modalRef}
-        onClick={(e) => e.stopPropagation()}
+        onClick={stopReactProp}
+        onWheel={stopReactProp}
+        onTouchStart={stopReactProp}
+        onTouchMove={stopReactProp}
+        onTouchEnd={stopReactProp}
+        onPointerDown={stopReactProp}
+        onPointerMove={stopReactProp}
+        onPointerUp={stopReactProp}
         role="dialog"
         aria-modal="true"
         aria-labelledby="search-modal-title"
@@ -102,7 +171,7 @@ export function SearchModal({ isOpen, onClose, onSelectMovie }: SearchModalProps
           <button
             type="button"
             className="search-close-btn"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close search"
           >
             Esc
@@ -124,7 +193,16 @@ export function SearchModal({ isOpen, onClose, onSelectMovie }: SearchModalProps
         </div>
 
         {/* Movie Results */}
-        <div className="search-results-list" role="region" aria-live="polite">
+        <div
+          ref={resultsListRef}
+          className="search-results-list"
+          onWheel={stopReactProp}
+          onTouchStart={stopReactProp}
+          onTouchMove={stopReactProp}
+          onTouchEnd={stopReactProp}
+          role="region"
+          aria-live="polite"
+        >
           {filteredMovies.length === 0 ? (
             <div className="search-empty-state">
               <span className="empty-emoji" aria-hidden="true">📽</span>

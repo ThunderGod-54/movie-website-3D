@@ -13,6 +13,8 @@
   justify-content: center;
   padding: clamp(24px, 6vh, 60px) 16px 24px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   animation: searchOverlayFade 0.2s ease-out;
@@ -36,6 +38,7 @@
   padding: 20px;
   color: var(--ink);
   font-family: var(--body);
+  overscroll-behavior: contain;
   animation: searchCardPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -164,6 +167,9 @@
 
 .search-results-list {
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   max-height: 480px;
   padding-right: 4px;
   scrollbar-width: thin;
@@ -340,5 +346,16 @@
   }
   .search-card {
     padding: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-overlay,
+  .search-card,
+  .genre-chip,
+  .search-movie-item,
+  .search-book-btn {
+    animation: none !important;
+    transition: none !important;
   }
 }

@@ -49,6 +49,37 @@ function Outline({ color = '#292620' }: { color?: string }) {
   return <Outlines thickness={0.035} color={color} screenspace={false} />
 }
 
+const labelTextureCache = new Map<string, CanvasTexture>()
+
+function getCanvasLabelTexture(
+  text: string,
+  color = '#292620',
+  background = 'transparent',
+  fontSize = 110
+): CanvasTexture {
+  const key = `${text}|${color}|${background}|${fontSize}`
+  const existing = labelTextureCache.get(key)
+  if (existing) return existing
+
+  const canvas = document.createElement('canvas')
+  canvas.width = 1024
+  canvas.height = 256
+  const context = canvas.getContext('2d')
+  if (context) {
+    context.fillStyle = background
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.fillStyle = color
+    context.font = `700 ${fontSize}px Georgia, serif`
+    context.textAlign = 'center'
+    context.textBaseline = 'middle'
+    context.fillText(text, canvas.width / 2, canvas.height / 2, canvas.width - 48)
+  }
+  const labelTexture = new CanvasTexture(canvas)
+  labelTexture.colorSpace = SRGBColorSpace
+  labelTextureCache.set(key, labelTexture)
+  return labelTexture
+}
+
 function CanvasLabel({
   text,
   position,
@@ -64,26 +95,10 @@ function CanvasLabel({
   background?: string
   fontSize?: number
 }) {
-  const texture = useMemo(() => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 1024
-    canvas.height = 256
-    const context = canvas.getContext('2d')
-    if (context) {
-      context.fillStyle = background
-      context.fillRect(0, 0, canvas.width, canvas.height)
-      context.fillStyle = color
-      context.font = `700 ${fontSize}px Georgia, serif`
-      context.textAlign = 'center'
-      context.textBaseline = 'middle'
-      context.fillText(text, canvas.width / 2, canvas.height / 2, canvas.width - 48)
-    }
-    const labelTexture = new CanvasTexture(canvas)
-    labelTexture.colorSpace = SRGBColorSpace
-    return labelTexture
-  }, [text, color, background, fontSize])
-
-  useEffect(() => () => texture.dispose(), [texture])
+  const texture = useMemo(
+    () => getCanvasLabelTexture(text, color, background, fontSize),
+    [text, color, background, fontSize]
+  )
 
   return (
     <mesh position={position}>
@@ -169,48 +184,144 @@ function Room() {
 }
 
 // ---------------------------------------------------------------------------
-// All 6 poster movies — rotated in pairs every 3.5s
+// All 6 poster movies — rotated in pairs every 3.5s with 0 React re-renders during fade
 // ---------------------------------------------------------------------------
-function useRemoteTexture(url: string): Texture | null {
-  const [texture, setTexture] = useState<Texture | null>(null)
-  useEffect(() => {
-    let alive = true
+const posterTextureCache = new Map<string, Texture>()
+const pendingTextureCallbacks = new Map<string, Set<() => void>>()
+
+function getOrLoadPosterTexture(url: string, onLoaded?: () => void): Texture | null {
+  if (posterTextureCache.has(url)) {
+    return posterTextureCache.get(url)!
+  }
+  if (!pendingTextureCallbacks.has(url)) {
+    pendingTextureCallbacks.set(url, new Set())
     const loader = new TextureLoader()
     loader.crossOrigin = 'anonymous'
-    loader.load(url, (tex) => {
-      if (!alive) return
-      tex.colorSpace = SRGBColorSpace
-      setTexture(tex)
-    })
-    return () => { alive = false }
-  }, [url])
-  useEffect(() => () => { texture?.dispose() }, [texture])
-  return texture
+    loader.load(
+      url,
+      (tex) => {
+        tex.colorSpace = SRGBColorSpace
+        posterTextureCache.set(url, tex)
+        const cbs = pendingTextureCallbacks.get(url)
+        if (cbs) {
+          cbs.forEach((cb) => cb())
+          pendingTextureCallbacks.delete(url)
+        }
+      },
+      undefined,
+      () => {
+        pendingTextureCallbacks.delete(url)
+      }
+    )
+  }
+  if (onLoaded) {
+    pendingTextureCallbacks.get(url)?.add(onLoaded)
+  }
+  return null
 }
 
-// Preload all textures once at module level so they're ready before the slot is shown
-function useAllTextures() {
-  const textures = moviePosters.map(m => useRemoteTexture(m.url)) // eslint-disable-line react-hooks/rules-of-hooks
-  return textures
-}
+const SWAP_INTERVAL = 3500 // ms between swaps
+const FADE_DURATION = 800 // ms of cross-fade
 
-// A single poster slot that cross-fades between movies
-function AnimatedPoster({
+function AnimatedPosterSlot({
   position,
-  setIndex,
-  nextIndex,
-  fade,
+  slotIndex,
 }: {
   position: [number, number, number]
-  setIndex: number
-  nextIndex: number
-  fade: number
+  slotIndex: number
 }) {
-  const textures = useAllTextures()
-  const curTex  = textures[setIndex]
-  const nextTex = textures[nextIndex]
-  const cur     = moviePosters[setIndex]
-  const nxt     = moviePosters[nextIndex]
+  const [curIndex, setCurIndex] = useState(slotIndex)
+  const [nextIndex, setNextIndex] = useState((slotIndex + 3) % moviePosters.length)
+  const [isCrossFading, setIsCrossFading] = useState(false)
+  const [displayedTitle, setDisplayedTitle] = useState(() => moviePosters[slotIndex].title)
+  const [, setTexTick] = useState(0)
+
+  const curMatRef = useRef<THREE.MeshBasicMaterial>(null)
+  const nextMatRef = useRef<THREE.MeshBasicMaterial>(null)
+  const isReducedMotionRef = useRef(false)
+
+  const fadeStateRef = useRef({
+    isFading: false,
+    startTime: 0,
+    swappedTitle: false,
+  })
+
+  // Ensure current and next textures are loaded
+  useEffect(() => {
+    const cur = moviePosters[curIndex]
+    const nxt = moviePosters[nextIndex]
+    getOrLoadPosterTexture(cur.url, () => setTexTick((t) => t + 1))
+    getOrLoadPosterTexture(nxt.url, () => setTexTick((t) => t + 1))
+  }, [curIndex, nextIndex])
+
+  // Respect reduced motion and schedule swap interval
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    isReducedMotionRef.current = mq.matches
+    const onMotion = (e: MediaQueryListEvent) => {
+      isReducedMotionRef.current = e.matches
+    }
+    mq.addEventListener('change', onMotion)
+
+    let intervalId: ReturnType<typeof setInterval> | null = null
+    const initialDelay = slotIndex * Math.round(SWAP_INTERVAL / 3)
+
+    const triggerFade = () => {
+      if (isReducedMotionRef.current || fadeStateRef.current.isFading) return
+      fadeStateRef.current = {
+        isFading: true,
+        startTime: performance.now(),
+        swappedTitle: false,
+      }
+      setIsCrossFading(true)
+    }
+
+    const timeoutId = setTimeout(() => {
+      triggerFade()
+      intervalId = setInterval(triggerFade, SWAP_INTERVAL)
+    }, initialDelay)
+
+    return () => {
+      clearTimeout(timeoutId)
+      if (intervalId) clearInterval(intervalId)
+      mq.removeEventListener('change', onMotion)
+    }
+  }, [slotIndex])
+
+  useFrame(() => {
+    if (!fadeStateRef.current.isFading) return
+    const elapsed = performance.now() - fadeStateRef.current.startTime
+    const progress = Math.min(elapsed / FADE_DURATION, 1)
+
+    // Direct uniform / opacity updates on Three.js materials - 0 React re-renders!
+    if (curMatRef.current) {
+      curMatRef.current.opacity = 1 - progress
+    }
+    if (nextMatRef.current) {
+      nextMatRef.current.opacity = progress
+    }
+
+    if (progress >= 0.5 && !fadeStateRef.current.swappedTitle) {
+      fadeStateRef.current.swappedTitle = true
+      setDisplayedTitle(moviePosters[nextIndex].title)
+    }
+
+    if (progress >= 1) {
+      fadeStateRef.current.isFading = false
+      const newCur = nextIndex
+      const newNext = (newCur + 3) % moviePosters.length
+      setCurIndex(newCur)
+      setNextIndex(newNext)
+      setIsCrossFading(false)
+      if (curMatRef.current) curMatRef.current.opacity = 1
+      if (nextMatRef.current) nextMatRef.current.opacity = 0
+    }
+  })
+
+  const curMovie = moviePosters[curIndex]
+  const nextMovie = moviePosters[nextIndex]
+  const curTex = posterTextureCache.get(curMovie.url)
+  const nextTex = posterTextureCache.get(nextMovie.url)
 
   return (
     <group position={position}>
@@ -220,20 +331,24 @@ function AnimatedPoster({
         <meshToonMaterial color="#573f36" />
         <Outline />
       </mesh>
-      {/* Current poster — fades out */}
+      {/* Current poster */}
       <mesh position={[0, 0, 0.08]}>
         <planeGeometry args={[1.58, 2.27]} />
-        {curTex
-          ? <meshBasicMaterial map={curTex} transparent opacity={1 - fade} />
-          : <meshToonMaterial color={cur.fallbackColor} />}
+        {curTex ? (
+          <meshBasicMaterial ref={curMatRef} map={curTex} transparent opacity={1} />
+        ) : (
+          <meshToonMaterial color={curMovie.fallbackColor} />
+        )}
       </mesh>
-      {/* Next poster — fades in on top */}
-      {fade > 0 && (
+      {/* Next poster — cross-fades in on top */}
+      {isCrossFading && (
         <mesh position={[0, 0, 0.085]}>
           <planeGeometry args={[1.58, 2.27]} />
-          {nextTex
-            ? <meshBasicMaterial map={nextTex} transparent opacity={fade} />
-            : <meshToonMaterial color={nxt.fallbackColor} />}
+          {nextTex ? (
+            <meshBasicMaterial ref={nextMatRef} map={nextTex} transparent opacity={0} />
+          ) : (
+            <meshToonMaterial color={nextMovie.fallbackColor} />
+          )}
         </mesh>
       )}
       {/* Title strip */}
@@ -242,7 +357,7 @@ function AnimatedPoster({
         <meshBasicMaterial color="#000000" transparent opacity={0.6} />
       </mesh>
       <CanvasLabel
-        text={(fade > 0.5 ? nxt.title : cur.title).toUpperCase()}
+        text={displayedTitle.toUpperCase()}
         position={[0, -1.02, 0.1]}
         size={[1.55, 0.3]}
         color="#ffffff"
@@ -252,75 +367,15 @@ function AnimatedPoster({
   )
 }
 
-const SWAP_INTERVAL = 3500  // ms between swaps
-const FADE_DURATION = 800   // ms of cross-fade
-
 function PosterWall() {
-  // Each of the 3 slots cycles independently, offset by SWAP_INTERVAL/3
-  const [slots, setSlots] = useState([
-    { cur: 0, next: 3, fade: 0 },
-    { cur: 1, next: 4, fade: 0 },
-    { cur: 2, next: 5, fade: 0 },
-  ])
-  const fadingRef = useRef([false, false, false])
-
-  useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = []
-
-    const startFade = (slotIdx: number) => {
-      if (fadingRef.current[slotIdx]) return
-      fadingRef.current[slotIdx] = true
-
-      const start = performance.now()
-      const tick = () => {
-        const elapsed = performance.now() - start
-        const progress = Math.min(elapsed / FADE_DURATION, 1)
-
-        setSlots(prev => {
-          const next = [...prev]
-          next[slotIdx] = { ...next[slotIdx], fade: progress }
-          return next
-        })
-
-        if (progress < 1) {
-          requestAnimationFrame(tick)
-        } else {
-          // Commit: current becomes next, pick a new next 3 slots ahead
-          setSlots(prev => {
-            const next = [...prev]
-            const newCur = prev[slotIdx].next
-            const newNext = (newCur + 3) % moviePosters.length
-            next[slotIdx] = { cur: newCur, next: newNext, fade: 0 }
-            return next
-          })
-          fadingRef.current[slotIdx] = false
-        }
-      }
-      requestAnimationFrame(tick)
-    }
-
-    // Stagger each slot by 1/3 of the interval
-    slots.forEach((_, i) => {
-      timers.push(setTimeout(() => {
-        startFade(i)
-        const interval = setInterval(() => startFade(i), SWAP_INTERVAL)
-        timers.push(interval as unknown as ReturnType<typeof setTimeout>)
-      }, i * (SWAP_INTERVAL / 3)))
-    })
-
-    return () => timers.forEach(clearTimeout)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   return (
     <group>
       <CanvasLabel text="NOW SHOWING" position={[0, 4.35, -7.77]} size={[3.6, 0.55]} fontSize={90} />
-      {slots.map((slot, i) => (
-        <AnimatedPoster
-          key={i}
-          position={[(-4.5 + i * 3) as number, 2.55, -7.72]}
-          setIndex={slot.cur}
-          nextIndex={slot.next}
-          fade={slot.fade}
+      {[0, 1, 2].map((slotIdx) => (
+        <AnimatedPosterSlot
+          key={slotIdx}
+          slotIndex={slotIdx}
+          position={[(-4.5 + slotIdx * 3) as number, 2.55, -7.72]}
         />
       ))}
     </group>
@@ -766,29 +821,50 @@ function HangingLights() {
 function CameraRig({ activeStop, insideAuditorium, pointerRef }: Pick<LobbySceneProps, 'activeStop' | 'insideAuditorium' | 'pointerRef'>) {
   const smoothed    = useRef([0, 4.2, 12, 0, 2.3, -2.1])
   const smoothedFov = useRef(42)
+  const isReducedMotionRef = useRef(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    isReducedMotionRef.current = mq.matches
+    const onMotion = (e: MediaQueryListEvent) => {
+      isReducedMotionRef.current = e.matches
+    }
+    mq.addEventListener('change', onMotion)
+    return () => mq.removeEventListener('change', onMotion)
+  }, [])
 
   useFrame(({ camera, clock }, delta) => {
     const position = insideAuditorium ? [0, 6.2, 10.5] : cameraPositions[activeStop] ?? cameraPositions[0]
     const look = insideAuditorium ? [0, 3.7, -13] : cameraTargets[activeStop] ?? cameraTargets[0]
     const targetFov = insideAuditorium ? 42 : cameraFovs[activeStop] ?? 42
     const { x, y }  = pointerRef.current
-    const sway = Math.sin(clock.elapsedTime * 0.24) * 0.07
-    const f    = 1 - Math.exp(-delta * 2.6)
+    const reduced = isReducedMotionRef.current
+    const sway = reduced ? 0 : Math.sin(clock.elapsedTime * 0.24) * 0.07
+    const f    = reduced ? 1 : 1 - Math.exp(-delta * 2.6)
     const s    = smoothed.current
 
-    s[0] += (position[0] + x * 0.35 + sway - s[0]) * f
-    s[1] += (position[1] + y * 0.18          - s[1]) * f
-    s[2] += (position[2]                     - s[2]) * f
-    s[3] += (look[0]    + x * 0.6            - s[3]) * f
-    s[4] += (look[1]    + y * 0.25           - s[4]) * f
-    s[5] += (look[2]                         - s[5]) * f
+    if (reduced) {
+      s[0] = position[0]
+      s[1] = position[1]
+      s[2] = position[2]
+      s[3] = look[0]
+      s[4] = look[1]
+      s[5] = look[2]
+    } else {
+      s[0] += (position[0] + x * 0.35 + sway - s[0]) * f
+      s[1] += (position[1] + y * 0.18          - s[1]) * f
+      s[2] += (position[2]                     - s[2]) * f
+      s[3] += (look[0]    + x * 0.6            - s[3]) * f
+      s[4] += (look[1]    + y * 0.25           - s[4]) * f
+      s[5] += (look[2]                         - s[5]) * f
+    }
 
     camera.position.set(s[0], s[1], s[2])
     camera.lookAt(s[3], s[4], s[5])
 
     const fovDiff = targetFov - smoothedFov.current
     if (Math.abs(fovDiff) > 0.01) {
-      smoothedFov.current += fovDiff * f
+      smoothedFov.current = reduced ? targetFov : smoothedFov.current + fovDiff * f
       ;(camera as THREE.PerspectiveCamera).fov = smoothedFov.current
       ;(camera as THREE.PerspectiveCamera).updateProjectionMatrix()
     }

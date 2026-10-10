@@ -43,8 +43,9 @@ export function MoviePosterBurst({ isModalOpen = false }: MoviePosterBurstProps)
   const winWidthRef = useRef(typeof window !== 'undefined' ? window.innerWidth : 1440)
   const winHeightRef = useRef(typeof window !== 'undefined' ? window.innerHeight : 900)
 
-  // Keep isModalOpenRef synchronized without restarting animations
-  isModalOpenRef.current = isModalOpen
+  useEffect(() => {
+    isModalOpenRef.current = isModalOpen
+  }, [isModalOpen])
 
   useEffect(() => {
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')

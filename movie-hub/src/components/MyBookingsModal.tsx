@@ -102,11 +102,21 @@ export function MyBookingsModal({ isOpen, onClose }: MyBookingsModalProps) {
   if (!isOpen) return null
 
   const modalContent = (
-    <div className="bookings-overlay" onClick={onClose} role="presentation">
+    <div
+      className="bookings-overlay"
+      onClick={onClose}
+      onWheel={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+      role="presentation"
+    >
       <div
         className="bookings-card"
         ref={modalRef}
         onClick={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="bookings-modal-title"
