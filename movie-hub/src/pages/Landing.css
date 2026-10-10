@@ -194,15 +194,17 @@
   top: clamp(100px, 15vh, 145px);
   left: 0;
   width: 100%;
-  color: #fff8e8;
+  color: var(--ink);
+  font-family: var(--hand);
   font-size: clamp(44px, 6vw, 76px);
+  font-weight: 600;
   line-height: 0.9;
-  text-shadow: 0 3px 22px rgba(20, 14, 20, 0.75);
+  text-shadow: none;
   pointer-events: none;
 }
 
 .landing-hero.is-scrolling h1 span {
-  color: #f2a081;
+  color: var(--accent);
 }
 
 .eyebrow {

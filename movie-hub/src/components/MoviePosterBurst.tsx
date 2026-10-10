@@ -147,19 +147,22 @@ export function MoviePosterBurst({ isActivated, isModalOpen = false }: MoviePost
     >
       <div className="movie-poster-scene" ref={sceneRef} aria-label="Movie poster background">
         <div className="movie-poster-flight" aria-hidden="true">
-          {moviePosters.map((movie, index) => (
-            <div
-              key={movie.title}
-              ref={(element) => {
-                posterRefs.current[index] = element
-              }}
-              className="movie-poster-card"
-              style={{ backgroundColor: movie.fallbackColor }}
-            >
-              <img src={movie.url} alt="" />
-              <span>{movie.title}</span>
-            </div>
-          ))}
+          {moviePosters.map((movie, index) => {
+            const isBanner = movie.type === 'banner'
+            return (
+              <div
+                key={movie.title}
+                ref={(element) => {
+                  posterRefs.current[index] = element
+                }}
+                className={`movie-poster-card ${isBanner ? 'is-banner' : 'is-poster'}`}
+                style={{ backgroundColor: movie.fallbackColor }}
+              >
+                <img src={movie.url} alt="" />
+                <span>{movie.title}</span>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

@@ -25,14 +25,14 @@
 
 .signin-modal-card {
   position: relative;
-  width: min(430px, calc(100vw - 32px));
-  max-height: min(610px, calc(100svh - 48px));
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(580px, calc(100svh - 48px));
   overflow-y: auto;
   background: #fffdf7;
   border: 1.5px solid var(--ink);
   border-radius: 22px;
   box-shadow: 6px 8px 0 var(--ink), 0 24px 48px rgba(38, 35, 31, 0.2);
-  padding: 26px 26px 22px;
+  padding: 28px 28px 24px;
   color: var(--ink);
   font-family: var(--body);
   transform-origin: center center;
@@ -88,97 +88,30 @@
   border: 1px dashed rgba(214, 90, 58, 0.55);
   border-radius: 12px;
   padding: 3px 10px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .signin-title {
-  margin: 0 0 4px;
+  margin: 0 0 6px;
   font-family: var(--hand);
-  font-size: clamp(30px, 5.5vw, 38px);
+  font-size: clamp(32px, 5.5vw, 38px);
   font-weight: 700;
   line-height: 1;
   color: var(--ink);
 }
 
 .signin-subtitle {
-  margin: 0 0 14px;
-  font-size: 12.5px;
-  line-height: 1.45;
-  color: #696358;
-}
-
-/* Social Buttons */
-.signin-social-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.social-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 6px 12px;
-  border: 1.5px solid rgba(38, 35, 31, 0.32);
-  border-radius: 20px;
-  background: rgba(255, 253, 247, 0.8);
-  color: var(--ink);
-  font-family: var(--body);
+  margin: 0 0 20px;
   font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 1px 2px 0 rgba(38, 35, 31, 0.3);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-}
-
-.social-btn:hover {
-  transform: translate(1px, 1px);
-  box-shadow: 0.5px 1px 0 rgba(38, 35, 31, 0.3);
-  background: #fff;
-}
-
-.social-icon {
-  width: 17px;
-  height: 17px;
-  flex-shrink: 0;
-}
-
-/* Filmstrip Perforated Divider */
-.signin-divider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 12px;
-}
-
-.divider-line {
-  flex: 1;
-  height: 1px;
-  background: repeating-linear-gradient(90deg, #b0a99c 0 3px, transparent 3px 6px);
-}
-
-.divider-text {
-  font-size: 11px;
-  font-weight: 500;
-  color: #857e72;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.divider-dot {
-  color: var(--accent);
-  font-size: 10px;
+  line-height: 1.5;
+  color: #696358;
 }
 
 /* Form Layout */
 .signin-form {
   display: flex;
   flex-direction: column;
-  gap: 11px;
+  gap: 14px;
 }
 
 .form-group {
@@ -233,14 +166,14 @@
 
 .form-input {
   width: 100%;
-  height: 38px;
+  height: 42px;
   padding: 0 14px 0 38px;
   border: 1.5px solid rgba(38, 35, 31, 0.42);
   border-radius: 10px;
   background: #fffdf9;
   color: var(--ink);
   font-family: var(--body);
-  font-size: 13px;
+  font-size: 13.5px;
   transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
 
@@ -320,19 +253,19 @@
 
 /* Primary Submit Action */
 .signin-submit-btn {
-  min-height: 42px;
+  min-height: 46px;
   width: 100%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 2px;
+  margin-top: 6px;
   padding: 0 20px 2px;
   border: 1.5px solid var(--ink);
   border-radius: 28px;
   background: var(--accent);
   color: #fffdf7;
   font-family: var(--hand);
-  font-size: 20px;
+  font-size: 21px;
   font-weight: 700;
   box-shadow: 2px 3px 0 var(--ink);
   cursor: pointer;
@@ -351,8 +284,8 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  margin-top: 13px;
-  padding-top: 11px;
+  margin-top: 18px;
+  padding-top: 14px;
   border-top: 1px solid rgba(38, 35, 31, 0.14);
   font-size: 12px;
   color: #706a5f;
@@ -389,17 +322,12 @@
   .signin-title {
     font-size: 32px;
   }
-
-  .signin-social-row {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .signin-overlay,
   .signin-modal-card,
   .signin-modal-content,
-  .social-btn,
   .signin-submit-btn {
     transition: none !important;
     animation: none !important;

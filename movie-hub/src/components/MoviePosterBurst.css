@@ -37,17 +37,28 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: clamp(150px, 19vw, 250px);
+  width: clamp(90px, 11.4vw, 150px);
   aspect-ratio: 0.68;
   overflow: hidden;
   border: 1px solid rgba(237, 214, 168, 0.72);
-  border-radius: 6px;
-  box-shadow: 0 18px 45px rgba(15, 12, 18, 0.42);
+  border-radius: 5px;
+  box-shadow: 0 12px 30px rgba(15, 12, 18, 0.38);
   transform-style: preserve-3d;
   will-change: transform, opacity;
   backface-visibility: hidden;
   pointer-events: none;
   cursor: default;
+}
+
+/* Larger movie banners — scaled to ~75% of previous rendered size */
+.movie-poster-card.is-banner {
+  width: clamp(112px, 14.25vw, 188px);
+  border-radius: 6px;
+}
+
+/* Regular / oversized movie posters — scaled to ~60% of previous rendered size */
+.movie-poster-card.is-poster {
+  width: clamp(90px, 11.4vw, 150px);
 }
 
 .movie-poster-card img {
@@ -65,23 +76,33 @@
   right: 0;
   bottom: 0;
   left: 0;
-  padding: 18px 7px 7px;
+  padding: 14px 6px 6px;
   overflow: hidden;
   color: #fff8e8;
   font-family: var(--hand);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.82));
   pointer-events: none;
 }
 
+.movie-poster-card.is-banner span {
+  font-size: 12px;
+  padding: 16px 7px 7px;
+}
+
 @media (max-width: 640px) {
-  .movie-poster-card {
-    width: clamp(120px, 32vw, 190px);
+  .movie-poster-card,
+  .movie-poster-card.is-poster {
+    width: clamp(72px, 19.2vw, 114px);
+  }
+
+  .movie-poster-card.is-banner {
+    width: clamp(90px, 24vw, 142px);
   }
 }
 
