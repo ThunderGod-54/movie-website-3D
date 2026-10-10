@@ -1,27 +1,46 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import { useAuthStore } from '../store/authStore'
 import './SignInModal.css'
 
 interface SignInModalProps {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: () => void
   originRect: DOMRect | null
+  promptMessage?: string | null
 }
 
-export function SignInModal({ isOpen, onClose, originRect }: SignInModalProps) {
+export function SignInModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  originRect,
+  promptMessage,
+}: SignInModalProps) {
   const [isClosing, setIsClosing] = useState(false)
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(true)
   const [isSignUpMode, setIsSignUpMode] = useState(false)
-  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
+
+  const { login, register, isLoading, errorMessage, clearError } = useAuthStore()
 
   const overlayRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const emailInputRef = useRef<HTMLInputElement>(null)
+  const nameInputRef = useRef<HTMLInputElement>(null)
   const isReducedMotionRef = useRef(false)
+
+  // Clear errors when opening modal or switching modes
+  useEffect(() => {
+    if (isOpen) {
+      clearError()
+    }
+  }, [isOpen, isSignUpMode, clearError])
 
   // Check reduced motion
   useEffect(() => {
@@ -48,7 +67,7 @@ export function SignInModal({ isOpen, onClose, originRect }: SignInModalProps) {
       card.style.transform = 'none'
       card.style.opacity = '1'
       content.style.opacity = '1'
-      setTimeout(() => emailInputRef.current?.focus(), 50)
+      setTimeout(() => (isSignUpMode ? nameInputRef.current?.focus() : emailInputRef.current?.focus()), 50)
       return
     }
 
@@ -74,7 +93,7 @@ export function SignInModal({ isOpen, onClose, originRect }: SignInModalProps) {
     overlay.animate(
       [
         { opacity: 0 },
-        { opacity: 1 }
+        { opacity: 1 },
       ],
       { duration: 420, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }
     )
@@ -93,12 +112,12 @@ export function SignInModal({ isOpen, onClose, originRect }: SignInModalProps) {
           borderRadius: '22px',
           boxShadow: '6px 8px 0 #26231f, 0 24px 48px rgba(38, 35, 31, 0.22)',
           opacity: 1,
-        }
+        },
       ],
       {
         duration: 440,
         easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-        fill: 'forwards'
+        fill: 'forwards',
       }
     )
 
@@ -107,21 +126,58 @@ export function SignInModal({ isOpen, onClose, originRect }: SignInModalProps) {
       [
         { opacity: 0, transform: 'scale(0.88)' },
         { opacity: 0, transform: 'scale(0.92)', offset: 0.35 },
-        { opacity: 1, transform: 'scale(1)' }
+        { opacity: 1, transform: 'scale(1)' },
       ],
       {
         duration: 440,
         easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
-        fill: 'forwards'
+        fill: 'forwards',
       }
     )
 
     cardAnim.onfinish = () => {
-      emailInputRef.current?.focus()
+      if (isSignUpMode) {
+        nameInputRef.current?.focus()
+      } else {
+        emailInputRef.current?.focus()
+      }
     }
-  }, [isOpen, isClosing, originRect])
+  }, [isOpen, isClosing, originRect, isSignUpMode])
 
-  // Signature Collapse Animation back into the button
+  // Direct dismissal on successful login (no retraction into vanished button)
+  const handleSuccessClose = useCallback(() => {
+    const card = cardRef.current
+    const overlay = overlayRef.current
+
+    if (!card || !overlay || isReducedMotionRef.current) {
+      if (onSuccess) onSuccess()
+      else onClose()
+      return
+    }
+
+    setIsClosing(true)
+    overlay.animate([{ opacity: 1 }, { opacity: 0 }], {
+      duration: 220,
+      easing: 'ease-out',
+      fill: 'forwards',
+    })
+
+    const cardAnim = card.animate(
+      [
+        { opacity: 1, transform: 'scale(1)' },
+        { opacity: 0, transform: 'scale(0.96)' },
+      ],
+      { duration: 220, easing: 'ease-out', fill: 'forwards' }
+    )
+
+    cardAnim.onfinish = () => {
+      setIsClosing(false)
+      if (onSuccess) onSuccess()
+      else onClose()
+    }
+  }, [onSuccess, onClose])
+
+  // Retraction back into origin button upon cancellation
   const handleStartClose = useCallback(() => {
     if (isClosing) return
     setIsClosing(true)
@@ -158,7 +214,7 @@ export function SignInModal({ isOpen, onClose, originRect }: SignInModalProps) {
     overlay.animate(
       [
         { opacity: 1 },
-        { opacity: 0 }
+        { opacity: 0 },
       ],
       { duration: 320, easing: 'ease-in', fill: 'forwards' }
     )
@@ -167,7 +223,7 @@ export function SignInModal({ isOpen, onClose, originRect }: SignInModalProps) {
     content.animate(
       [
         { opacity: 1, transform: 'scale(1)' },
-        { opacity: 0, transform: 'scale(0.86)' }
+        { opacity: 0, transform: 'scale(0.86)' },
       ],
       { duration: 160, easing: 'ease-out', fill: 'forwards' }
     )
@@ -186,12 +242,12 @@ export function SignInModal({ isOpen, onClose, originRect }: SignInModalProps) {
           borderRadius: '20px',
           boxShadow: '1.5px 2px 0 #26231f',
           opacity: 0.1,
-        }
+        },
       ],
       {
         duration: 360,
         easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
-        fill: 'forwards'
+        fill: 'forwards',
       }
     )
 
@@ -214,16 +270,27 @@ export function SignInModal({ isOpen, onClose, originRect }: SignInModalProps) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, handleStartClose])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email.trim() || !password.trim()) {
-      setFeedbackMessage('Please enter your email and password to take your seat.')
-      return
+    clearError()
+
+    if (isSignUpMode) {
+      const success = await register(name, email, password)
+      if (success) {
+        handleSuccessClose()
+      }
+    } else {
+      const success = await login(email, password)
+      if (success) {
+        handleSuccessClose()
+      }
     }
-    // Authentic preview response - backend authentication is not yet configured
-    setFeedbackMessage(
-      `Welcome to Goodshow! Preview signed in as ${email}. Full account persistence will sync when authentication services are connected.`
-    )
+  }
+
+  const fillDemoCredentials = () => {
+    setEmail('cinema@goodshow.com')
+    setPassword('Goodshow123!')
+    clearError()
   }
 
   if (!isOpen && !isClosing) return null
@@ -270,8 +337,52 @@ export function SignInModal({ isOpen, onClose, originRect }: SignInModalProps) {
               : 'Pull up a seat. Your watchlist, seat reservations, and cinema memories await.'}
           </p>
 
+          {/* Pending Booking Prompt Banner */}
+          {promptMessage && (
+            <div className="signin-prompt-banner" role="alert">
+              <span className="banner-icon" aria-hidden="true">🎟</span>
+              <span className="banner-text">{promptMessage}</span>
+            </div>
+          )}
+
+          {/* Error Message Banner */}
+          {errorMessage && (
+            <div className="signin-error-box" role="alert">
+              <span className="error-star" aria-hidden="true">⚠️</span>
+              <span className="error-text">{errorMessage}</span>
+            </div>
+          )}
+
           {/* Form */}
           <form className="signin-form" onSubmit={handleSubmit}>
+            {/* Name Field (Sign Up mode only) */}
+            {isSignUpMode && (
+              <div className="form-group">
+                <label htmlFor="signin-name" className="form-label">
+                  Your name
+                </label>
+                <div className="input-wrapper">
+                  <span className="input-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </span>
+                  <input
+                    ref={nameInputRef}
+                    id="signin-name"
+                    type="text"
+                    required
+                    placeholder="Jane Doe"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="form-input"
+                    autoComplete="name"
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Email Field */}
             <div className="form-group">
               <label htmlFor="signin-email" className="form-label">
@@ -308,9 +419,10 @@ export function SignInModal({ isOpen, onClose, originRect }: SignInModalProps) {
                   <button
                     type="button"
                     className="forgot-link"
-                    onClick={() => setFeedbackMessage('Password recovery will send a cinema ticket reset link to your email.')}
+                    onClick={fillDemoCredentials}
+                    title="Fill demo account credentials"
                   >
-                    Forgot password?
+                    Use demo account
                   </button>
                 )}
               </div>
@@ -365,17 +477,17 @@ export function SignInModal({ isOpen, onClose, originRect }: SignInModalProps) {
               </label>
             </div>
 
-            {/* Feedback Message */}
-            {feedbackMessage && (
-              <div className="signin-feedback-box" role="status">
-                <span className="feedback-star" aria-hidden="true">✳</span>
-                <span>{feedbackMessage}</span>
-              </div>
-            )}
-
             {/* Submit Action */}
-            <button type="submit" className="signin-submit-btn">
-              <span>{isSignUpMode ? 'Claim Your Seat ➔' : 'Take Your Seat ➔'}</span>
+            <button
+              type="submit"
+              className="signin-submit-btn"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className="signin-spinner" aria-hidden="true" />
+              ) : (
+                <span>{isSignUpMode ? 'Claim Your Seat ➔' : 'Take Your Seat ➔'}</span>
+              )}
             </button>
           </form>
 
@@ -387,7 +499,7 @@ export function SignInModal({ isOpen, onClose, originRect }: SignInModalProps) {
               className="toggle-mode-btn"
               onClick={() => {
                 setIsSignUpMode(!isSignUpMode)
-                setFeedbackMessage(null)
+                clearError()
               }}
             >
               {isSignUpMode ? 'Sign In instead' : 'Join the Cinema Club'}

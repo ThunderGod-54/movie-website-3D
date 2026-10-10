@@ -1,26 +1,12 @@
-import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { MoviePosterBurst } from '../components/MoviePosterBurst'
-import { SignInModal } from '../components/SignInModal'
+import { NavbarUserActions } from '../components/NavbarUserActions'
+import { useAuthStore } from '../store/authStore'
 import './Landing.css'
 import './LandingMotion.css'
 
 function Landing() {
-  const [isSignInOpen, setIsSignInOpen] = useState(false)
-  const [signInOriginRect, setSignInOriginRect] = useState<DOMRect | null>(null)
-  const signInBtnRef = useRef<HTMLButtonElement>(null)
-
-  const handleOpenSignIn = () => {
-    if (signInBtnRef.current) {
-      const rect = signInBtnRef.current.getBoundingClientRect()
-      setSignInOriginRect(rect)
-    }
-    setIsSignInOpen(true)
-  }
-
-  const handleCloseSignIn = () => {
-    setIsSignInOpen(false)
-  }
+  const { isSignInModalOpen } = useAuthStore()
 
   return (
     <div className="landing-page">
@@ -32,30 +18,12 @@ function Landing() {
           <span>goodshow</span>
         </Link>
 
-        {/* Navigation items: About → Sign In → Enter Theater */}
+        {/* Navigation items: About → Sign In / Profile (Enter Theater removed from navbar) */}
         <div className="landing-header-actions">
-          <a className="about-link" href="#about">About <span aria-hidden="true">↗</span></a>
-
-          <button
-            ref={signInBtnRef}
-            type="button"
-            className={`nav-signin-btn ${isSignInOpen ? 'is-emerging-origin' : ''}`}
-            onClick={handleOpenSignIn}
-            aria-haspopup="dialog"
-            aria-expanded={isSignInOpen}
-            aria-label="Sign In to Goodshow Cinema"
-          >
-            <span>Sign In</span>
-          </button>
-
-          <Link
-            className="header-enter-btn is-visible"
-            to="/lobby"
-            aria-label="Enter the theatre"
-          >
-            <span>Enter theatre</span>
-            <span aria-hidden="true">↗</span>
-          </Link>
+          <a className="about-link" href="#about">
+            About <span aria-hidden="true">↗</span>
+          </a>
+          <NavbarUserActions />
         </div>
       </header>
 
@@ -77,20 +45,13 @@ function Landing() {
         </section>
 
         {/* Continuous background animation running right from page load */}
-        <MoviePosterBurst isModalOpen={isSignInOpen} />
+        <MoviePosterBurst isModalOpen={isSignInModalOpen} />
       </main>
 
       <footer className="landing-footer" id="about">
         <p>Made for nights worth remembering</p>
         <small>A little movie magic, just for you.</small>
       </footer>
-
-      {/* Cinematic Sign In Modal */}
-      <SignInModal
-        isOpen={isSignInOpen}
-        onClose={handleCloseSignIn}
-        originRect={signInOriginRect}
-      />
     </div>
   )
 }

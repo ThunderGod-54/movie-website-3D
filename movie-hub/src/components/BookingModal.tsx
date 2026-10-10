@@ -1,15 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { CINEMA_CATALOGUE as movies } from '../data/movies'
+import { useAuthStore } from '../store/authStore'
 import { playSelectionTick } from '../utils/selectionSound'
 import './BookingModal.css'
-
-const movies = [
-  { id: 'odyssey',  title: 'The Odyssey',               genre: 'Epic',     duration: '2h 50m', rating: 'U/A' },
-  { id: 'spidey',   title: 'Spider-Man: Brand New Day',  genre: 'Action',   duration: '2h 15m', rating: 'U/A' },
-  { id: 'f1',       title: 'F1',                         genre: 'Drama',    duration: '2h 10m', rating: 'U'   },
-  { id: 'hailmary', title: 'Project Hail Mary',          genre: 'Sci-Fi',   duration: '2h 28m', rating: 'U/A' },
-  { id: 'dhura2',   title: 'Dhurandhar 2',               genre: 'Action',   duration: '2h 35m', rating: 'UA'  },
-  { id: 'obsess',   title: 'Obsession',                  genre: 'Thriller', duration: '1h 58m', rating: 'A'   },
-]
 
 const showtimes = ['10:30 AM', '1:15 PM', '4:00 PM', '7:30 PM', '10:45 PM']
 
@@ -28,7 +21,7 @@ function playSuccessChime() {
     // Three ascending notes — C5, E5, G5
     const notes = [523.25, 659.25, 783.99]
     notes.forEach((freq, i) => {
-      const osc  = ctx.createOscillator()
+      const osc = ctx.createOscillator()
       const gain = ctx.createGain()
       osc.connect(gain)
       gain.connect(ctx.destination)
@@ -49,7 +42,7 @@ function playSuccessChime() {
 }
 
 function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, character => {
+  return value.replace(/[&<>"']/g, (character) => {
     const entities: Record<string, string> = {
       '&': '&amp;',
       '<': '&lt;',
@@ -72,58 +65,136 @@ type BookingState = {
 type Props = {
   onClose: () => void
   onGoToFood: () => void
+  initialMovieId?: string | null
 }
 
-export default function BookingModal({ onClose, onGoToFood }: Props) {
-  const [step, setStep]       = useState<Step>('movie')
-  const [booking, setBooking] = useState<BookingState>({ movie: null, showtime: null, seats: [] })
+export default function BookingModal({ onClose, onGoToFood, initialMovieId }: Props) {
+  const {
+    isAuthenticated,
+    pendingBooking,
+    setPendingBooking,
+    createBooking,
+    openSignInModal,
+  } = useAuthStore()
 
-  const selectedMovie = movies.find(m => m.id === booking.movie)
-  const total         = booking.seats.length * 280
-  const stepIndex     = ['movie', 'showtime', 'seats', 'confirm'].indexOf(step)
+  const [step, setStep] = useState<Step>(() => {
+    if (initialMovieId) return 'showtime'
+    return 'movie'
+  })
+
+  const [booking, setBooking] = useState<BookingState>(() => {
+    if (initialMovieId) {
+      return { movie: initialMovieId, showtime: null, seats: [] }
+    }
+    return { movie: null, showtime: null, seats: [] }
+  })
+
+  const [confirmedReference, setConfirmedReference] = useState<string>('')
+
+  // Resume pending booking automatically upon authentication
+  useEffect(() => {
+    if (pendingBooking) {
+      setBooking({
+        movie: pendingBooking.movieId,
+        showtime: pendingBooking.showtime,
+        seats: pendingBooking.seats,
+      })
+      if (pendingBooking.seats.length > 0) {
+        setStep('confirm')
+      } else if (pendingBooking.showtime) {
+        setStep('seats')
+      }
+    }
+  }, [pendingBooking])
+
+  const selectedMovie = movies.find((m) => m.id === booking.movie)
+  const total = booking.seats.length * 280
+  const stepIndex = ['movie', 'showtime', 'seats', 'confirm'].indexOf(step)
 
   function selectMovie(id: string) {
     playSelectionTick()
-    setBooking(b => ({ ...b, movie: id }))
+    setBooking((b) => ({ ...b, movie: id }))
     setStep('showtime')
   }
 
   function selectShowtime(t: string) {
     playSelectionTick()
-    setBooking(b => ({ ...b, showtime: t }))
+    setBooking((b) => ({ ...b, showtime: t }))
     setStep('seats')
   }
 
   function toggleSeat(seatId: string) {
     const isSelected = booking.seats.includes(seatId)
     if (isSelected || booking.seats.length < 8) playSelectionTick()
-    setBooking(b => ({
+    setBooking((b) => ({
       ...b,
       seats: isSelected
-        ? b.seats.filter(s => s !== seatId)
-        : b.seats.length < 8 ? [...b.seats, seatId] : b.seats,
+        ? b.seats.filter((s) => s !== seatId)
+        : b.seats.length < 8
+        ? [...b.seats, seatId]
+        : b.seats,
     }))
   }
 
   function goBack() {
     if (step === 'showtime') setStep('movie')
-    else if (step === 'seats')   setStep('showtime')
+    else if (step === 'seats') setStep('showtime')
     else if (step === 'confirm') setStep('seats')
   }
 
+  // Enforce authentication before proceeding to confirmation
+  function handleProceedToConfirm() {
+    if (!isAuthenticated) {
+      setPendingBooking({
+        movieId: booking.movie || '',
+        movieTitle: selectedMovie?.title || '',
+        showtime: booking.showtime || '',
+        seats: booking.seats,
+      })
+      openSignInModal('Please sign in to continue with your booking')
+      return
+    }
+    setStep('confirm')
+  }
+
+  // Enforce authentication on final confirmation & create persistent booking
   function handleConfirm() {
-    playSuccessChime()
-    setStep('success')
+    if (!isAuthenticated) {
+      setPendingBooking({
+        movieId: booking.movie || '',
+        movieTitle: selectedMovie?.title || '',
+        showtime: booking.showtime || '',
+        seats: booking.seats,
+      })
+      openSignInModal('Please sign in to continue with your booking')
+      return
+    }
+
+    try {
+      const record = createBooking({
+        movieId: booking.movie || '',
+        movieTitle: selectedMovie?.title || '',
+        showtime: booking.showtime || '',
+        seats: booking.seats,
+        totalPrice: total,
+      })
+      setConfirmedReference(record.id)
+      playSuccessChime()
+      setStep('success')
+    } catch (err) {
+      console.error('Failed to create booking:', err)
+    }
   }
 
   function downloadTicketInvoice() {
     const movieTitle = escapeHtml(selectedMovie?.title ?? 'Cinema booking')
     const showtime = escapeHtml(booking.showtime ?? '')
     const seats = escapeHtml(booking.seats.join(', '))
-    const bookingReference = `GS-${Date.now().toString(36).toUpperCase()}`
+    const bookingReference = confirmedReference || `GS-${Date.now().toString(36).toUpperCase()}`
     const bookingDate = new Intl.DateTimeFormat(undefined, {
       dateStyle: 'long',
     }).format(new Date())
+
     const ticketHtml = `<!doctype html>
 <html lang="en">
 <head>
@@ -161,6 +232,7 @@ export default function BookingModal({ onClose, onGoToFood }: Props) {
   </main>
 </body>
 </html>`
+
     const file = new Blob([ticketHtml], { type: 'text/html;charset=utf-8' })
     const url = URL.createObjectURL(file)
     const link = document.createElement('a')
@@ -183,11 +255,11 @@ export default function BookingModal({ onClose, onGoToFood }: Props) {
       <div
         className="bm-backdrop"
         onClick={onClose}
-        onWheel={event => event.stopPropagation()}
-        onPointerDown={event => event.stopPropagation()}
-        onPointerUp={event => event.stopPropagation()}
+        onWheel={(event) => event.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
+        onPointerUp={(event) => event.stopPropagation()}
       >
-        <div className="bm-modal bm-modal--success" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+        <div className="bm-modal bm-modal--success" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
           <button className="bm-close-btn bm-close-btn--abs" onClick={onClose} aria-label="Close">✕</button>
 
           <div className="bm-success-icon" aria-hidden="true">
@@ -198,10 +270,10 @@ export default function BookingModal({ onClose, onGoToFood }: Props) {
           </div>
 
           <h2 className="bm-success-title">Booking Confirmed!</h2>
-          <p className="bm-success-sub">Your tickets are locked in. See you at the show.</p>
+          <p className="bm-success-sub">Your tickets are locked in and saved to your account. See you at the show.</p>
 
           <div className="bm-success-ticket">
-            <p className="bm-confirm-kicker">✳ GOODSHOW CINEMA</p>
+            <p className="bm-confirm-kicker">✳ GOODSHOW CINEMA · {confirmedReference}</p>
             <h3 className="bm-confirm-movie">{selectedMovie?.title}</h3>
             <div className="bm-confirm-rows">
               <div className="bm-confirm-row"><span>Show</span><span>{booking.showtime}</span></div>
@@ -228,96 +300,102 @@ export default function BookingModal({ onClose, onGoToFood }: Props) {
     )
   }
 
-  // ── Main booking flow ───────────────────────────────────────────────────────
+  // ── Step screens ────────────────────────────────────────────────────────────
   return (
     <div
       className="bm-backdrop"
       onClick={onClose}
-      onWheel={event => event.stopPropagation()}
-      onPointerDown={event => event.stopPropagation()}
-      onPointerUp={event => event.stopPropagation()}
+      onWheel={(event) => event.stopPropagation()}
+      onPointerDown={(event) => event.stopPropagation()}
+      onPointerUp={(event) => event.stopPropagation()}
     >
-      <div className="bm-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Book tickets">
+      <div className="bm-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
 
         {/* Header */}
         <div className="bm-header">
           <div className="bm-header-left">
             {step !== 'movie' && (
-              <button className="bm-back-btn" onClick={goBack} aria-label="Go back">← Back</button>
+              <button className="bm-back-btn" onClick={goBack} aria-label="Go back">
+                ←
+              </button>
             )}
+            <div>
+              <p className="bm-kicker">BOX OFFICE</p>
+              <h2 className="bm-title">
+                {step === 'movie'    && 'Select a film'}
+                {step === 'showtime' && selectedMovie?.title}
+                {step === 'seats'    && 'Pick your seats'}
+                {step === 'confirm'  && 'Confirm booking'}
+              </h2>
+            </div>
           </div>
-          <h2 className="bm-title">
-            {step === 'movie'    && 'Select a film'}
-            {step === 'showtime' && selectedMovie?.title}
-            {step === 'seats'    && 'Pick your seats'}
-            {step === 'confirm'  && 'Confirm booking'}
-          </h2>
           <button className="bm-close-btn" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
         {/* Step indicator */}
-        <div className="bm-steps" aria-label="Booking progress">
-          {['Film', 'Time', 'Seats', 'Confirm'].map((label, i) => (
-            <div key={label} className={`bm-step ${i <= stepIndex ? 'is-done' : ''} ${i === stepIndex ? 'is-active' : ''}`}>
-              <span className="bm-step-dot">{i < stepIndex ? '✓' : i + 1}</span>
-              <span className="bm-step-label">{label}</span>
+        <div className="bm-steps" aria-hidden="true">
+          {['Film', 'Time', 'Seats', 'Pay'].map((label, i) => (
+            <div
+              key={label}
+              className={`bm-step-dot ${i === stepIndex ? 'is-active' : ''} ${i < stepIndex ? 'is-done' : ''}`}
+            >
+              <span>{label}</span>
             </div>
           ))}
         </div>
 
-        {/* Body */}
+        {/* Step content */}
         <div className="bm-body">
 
+          {/* 1. Pick Movie */}
           {step === 'movie' && (
-            <ul className="bm-movie-list" role="list">
-              {movies.map(m => (
-                <li key={m.id}>
-                  <button
-                    className={`bm-movie-card ${booking.movie === m.id ? 'is-selected' : ''}`}
-                    onClick={() => selectMovie(m.id)}
-                  >
-                    <div className="bm-movie-card-inner">
-                      <span className="bm-movie-title">{m.title}</span>
-                      <div className="bm-movie-meta">
-                        <span className="bm-badge">{m.genre}</span>
-                        <span className="bm-badge bm-badge-outline">{m.rating}</span>
-                        <span className="bm-movie-dur">{m.duration}</span>
-                      </div>
-                    </div>
-                    <span className="bm-movie-arrow">→</span>
-                  </button>
-                </li>
+            <div className="bm-movies-grid">
+              {movies.map((m) => (
+                <button
+                  key={m.id}
+                  className={`bm-movie-card ${booking.movie === m.id ? 'is-selected' : ''}`}
+                  onClick={() => selectMovie(m.id)}
+                >
+                  <span className="bm-movie-genre">{m.genre}</span>
+                  <strong className="bm-movie-name">{m.title}</strong>
+                  <span className="bm-movie-meta">{m.duration} · {m.rating}</span>
+                </button>
               ))}
-            </ul>
+            </div>
           )}
 
+          {/* 2. Pick Showtime */}
           {step === 'showtime' && (
-            <div>
-              <p className="bm-section-label">TODAY · GOODSHOW CINEMA</p>
-              <div className="bm-showtime-grid">
-                {showtimes.map(t => (
+            <div className="bm-showtimes">
+              <p className="bm-section-label">Today's showtimes</p>
+              <div className="bm-times-grid">
+                {showtimes.map((t) => (
                   <button
                     key={t}
-                    className={`bm-showtime-btn ${booking.showtime === t ? 'is-selected' : ''}`}
+                    className={`bm-time-btn ${booking.showtime === t ? 'is-selected' : ''}`}
                     onClick={() => selectShowtime(t)}
                   >
                     {t}
                   </button>
                 ))}
               </div>
+              <p className="bm-hint">All screens equipped with Dolby Atmos sound</p>
             </div>
           )}
 
+          {/* 3. Pick Seats */}
           {step === 'seats' && (
-            <div className="bm-seat-section">
-              <div className="bm-screen-label">SCREEN</div>
-              <div className="bm-seat-grid">
-                {ROWS.map(row => (
-                  <div key={row} className="bm-seat-row">
+            <div className="bm-seats-wrap">
+              <div className="bm-screen-bar" aria-label="Screen direction">
+                <span>SCREEN THIS WAY</span>
+              </div>
+              <div className="bm-grid" role="group" aria-label="Seat map">
+                {ROWS.map((row) => (
+                  <div key={row} className="bm-row">
                     <span className="bm-row-label">{row}</span>
                     {Array.from({ length: COLS }, (_, c) => {
                       const seatId = `${row}${c + 1}`
-                      const sold   = isSold(row, c + 1)
+                      const sold = isSold(row, c + 1)
                       const picked = booking.seats.includes(seatId)
                       return (
                         <button
@@ -340,12 +418,13 @@ export default function BookingModal({ onClose, onGoToFood }: Props) {
               {booking.seats.length > 0 && (
                 <div className="bm-seat-footer">
                   <span>{booking.seats.length} seat{booking.seats.length > 1 ? 's' : ''} — {booking.seats.join(', ')}</span>
-                  <button className="bm-proceed-btn" onClick={() => setStep('confirm')}>Proceed →</button>
+                  <button className="bm-proceed-btn" onClick={handleProceedToConfirm}>Proceed →</button>
                 </div>
               )}
             </div>
           )}
 
+          {/* 4. Confirm & Pay */}
           {step === 'confirm' && (
             <div className="bm-confirm">
               <div className="bm-confirm-card">

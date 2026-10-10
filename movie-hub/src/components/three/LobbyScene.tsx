@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import * as THREE from 'three'
-import { CanvasTexture, Group, SRGBColorSpace, TextureLoader, Texture } from 'three'
+import { CanvasTexture, SRGBColorSpace, TextureLoader, Texture } from 'three'
 import Auditorium from './Auditorium'
 import { moviePosters } from './moviePosters'
 
@@ -741,30 +741,6 @@ function ScreensDoor({ onClick }: { onClick: () => void }) {
   )
 }
 
-function FloatingTicket() {
-  const groupRef = useRef<Group>(null)
-  useFrame(({ clock }) => {
-    if (!groupRef.current) return
-    const t = clock.elapsedTime
-    groupRef.current.position.y = 3.6 + Math.sin(t * 0.65) * 0.16
-    groupRef.current.rotation.y = Math.sin(t * 0.34) * 0.15
-    groupRef.current.rotation.z = Math.sin(t * 0.5) * 0.08
-  })
-  return (
-    <group ref={groupRef} position={[2.75, 3.6, 1.4]}>
-      <mesh>
-        <boxGeometry args={[1.05, 0.56, 0.08]} />
-        <meshToonMaterial color="#e8bf79" />
-        <Outline />
-      </mesh>
-      <mesh position={[0, 0, 0.05]}>
-        <boxGeometry args={[0.035, 0.4, 0.02]} />
-        <meshBasicMaterial color="#885448" />
-      </mesh>
-    </group>
-  )
-}
-
 function HangingLights() {
   const xPositions = [-5.6, 0, 5.6] as const
   return (
@@ -835,7 +811,6 @@ function LobbyScene({ activeStop, insideAuditorium, pointerRef, onTicketClick, o
           <TicketCounter onClick={onTicketClick} />
           <FoodCourtCounter onClick={onFoodClick} />
           <ScreensDoor onClick={onScreensClick} />
-          <FloatingTicket />
           <HangingLights />
           <LobbyFurniture />
         </>

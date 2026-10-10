@@ -1,0 +1,235 @@
+.settings-overlay {
+  --ink: #26231f;
+  --paper: #f7f4eb;
+  --accent: #d65a3a;
+  --hand: 'Caveat', cursive;
+  --body: 'DM Sans', sans-serif;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(28, 25, 22, 0.54);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow-y: auto;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: settingsFadeIn 0.22s ease-out;
+}
+
+@keyframes settingsFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.settings-card {
+  position: relative;
+  width: min(520px, calc(100vw - 32px));
+  background: #fffdf7;
+  border: 1.5px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 6px 8px 0 var(--ink), 0 24px 48px rgba(38, 35, 31, 0.22);
+  padding: 28px;
+  color: var(--ink);
+  font-family: var(--body);
+  margin: auto;
+  animation: settingsScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes settingsScaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.settings-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(38, 35, 31, 0.3);
+  border-radius: 50%;
+  background: rgba(255, 253, 247, 0.9);
+  color: var(--ink);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  z-index: 10;
+}
+
+.settings-close-btn:hover {
+  background: var(--ink);
+  color: #fffdf7;
+}
+
+.settings-header {
+  margin-bottom: 20px;
+}
+
+.settings-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  color: var(--accent);
+  background: rgba(214, 90, 58, 0.08);
+  border: 1px dashed rgba(214, 90, 58, 0.55);
+  border-radius: 12px;
+  padding: 3px 10px;
+  margin-bottom: 8px;
+}
+
+.settings-title {
+  margin: 0 0 4px;
+  font-family: var(--hand);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.settings-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #696358;
+}
+
+.settings-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  background: #fbf7ee;
+  border: 1.5px solid rgba(38, 35, 31, 0.18);
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.settings-avatar-large {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fffdf7;
+  display: grid;
+  place-items: center;
+  font-family: var(--hand);
+  font-size: 28px;
+  font-weight: 700;
+  flex-shrink: 0;
+  border: 2px solid var(--accent);
+}
+
+.settings-profile-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.profile-name {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.profile-email {
+  margin: 0;
+  font-size: 13px;
+  color: #6d665a;
+}
+
+.profile-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  background: #fff;
+  border: 1px solid rgba(214, 90, 58, 0.35);
+  border-radius: 8px;
+  padding: 2px 8px;
+  width: fit-content;
+  margin-top: 4px;
+}
+
+.settings-details-section {
+  margin-bottom: 24px;
+}
+
+.section-title {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #7b7468;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.settings-field {
+  background: #fff;
+  border: 1px solid rgba(38, 35, 31, 0.14);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #8c8577;
+}
+
+.field-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.field-value.monospace {
+  font-family: monospace;
+  font-size: 11.5px;
+  color: #555;
+}
+
+.status-secure {
+  color: #2e7d32;
+}
+
+.settings-actions-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.settings-done-btn {
+  padding: 9px 24px;
+  border: 1.5px solid var(--ink);
+  border-radius: 20px;
+  background: var(--ink);
+  color: #fffdf7;
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.settings-done-btn:hover {
+  opacity: 0.88;
+}

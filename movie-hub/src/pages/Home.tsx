@@ -3,6 +3,8 @@ import { useRef, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import BookingModal from '../components/BookingModal'
 import FoodModal from '../components/FoodModal'
+import { NavbarUserActions } from '../components/NavbarUserActions'
+import { SearchModal } from '../components/SearchModal'
 import LobbyScene from '../components/three/LobbyScene'
 import './Home.css'
 
@@ -36,7 +38,10 @@ function Home() {
   const [menuOpen,   setMenuOpen]     = useState(false)
   const [bookingOpen, setBookingOpen] = useState(false)
   const [foodOpen,    setFoodOpen]    = useState(false)
-  const frameloop = menuOpen || bookingOpen || foodOpen ? 'demand' : 'always'
+  const [searchOpen,  setSearchOpen]  = useState(false)
+  const [selectedMovieForBooking, setSelectedMovieForBooking] = useState<string | null>(null)
+
+  const frameloop = menuOpen || bookingOpen || foodOpen || searchOpen ? 'demand' : 'always'
 
   // FOOD_COURT is stop index 3
   function openFoodCourt() {
@@ -101,17 +106,36 @@ function Home() {
           <span aria-hidden="true">←</span> Goodshow
         </Link>
         <p className="lobby-header-note"><span aria-hidden="true">✳</span> THE PICTURE HOUSE</p>
-        <button
-          className="lobby-menu-btn"
-          type="button"
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={menuOpen}
-          onClick={toggleMenu}
-        >
-          <span className={`hamburger ${menuOpen ? 'is-open' : ''}`}>
-            <span /><span /><span />
-          </span>
-        </button>
+
+        <div className="lobby-header-right">
+          <button
+            className="lobby-search-btn"
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search movies"
+            title="Search movies in catalogue"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <span className="lobby-search-label">Search</span>
+          </button>
+
+          <NavbarUserActions />
+
+          <button
+            className="lobby-menu-btn"
+            type="button"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            onClick={toggleMenu}
+          >
+            <span className={`hamburger ${menuOpen ? 'is-open' : ''}`}>
+              <span /><span /><span />
+            </span>
+          </button>
+        </div>
       </header>
 
       {/* ── 3-D stage ──────────────────────────────────────────── */}
@@ -129,7 +153,10 @@ function Home() {
             <LobbyScene
               activeStop={activeStop}
               pointerRef={pointerRef}
-              onTicketClick={() => setBookingOpen(true)}
+              onTicketClick={() => {
+                setSelectedMovieForBooking(null)
+                setBookingOpen(true)
+              }}
               onFoodClick={() => setFoodOpen(true)}
               onScreensClick={() => setInsideAuditorium(true)}
               insideAuditorium={insideAuditorium}
@@ -215,13 +242,29 @@ function Home() {
         </div>
 
       </div>
+
+      {/* ── Search modal ────────────────────────────────────────── */}
+      <SearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSelectMovie={(movie) => {
+          setSelectedMovieForBooking(movie.id)
+          setBookingOpen(true)
+        }}
+      />
+
       {/* ── Booking modal ───────────────────────────────────────── */}
       {bookingOpen && (
         <BookingModal
-          onClose={() => setBookingOpen(false)}
+          initialMovieId={selectedMovieForBooking}
+          onClose={() => {
+            setBookingOpen(false)
+            setSelectedMovieForBooking(null)
+          }}
           onGoToFood={openFoodCourt}
         />
       )}
+
       {/* ── Food modal ──────────────────────────────────────────── */}
       {foodOpen && <FoodModal onClose={() => setFoodOpen(false)} />}
     </main>
