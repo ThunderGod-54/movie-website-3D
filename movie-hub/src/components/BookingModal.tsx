@@ -321,89 +321,86 @@ export default function BookingModal({ onClose, onGoToFood, initialMovieId }: Pr
       onPointerDown={(event) => event.stopPropagation()}
       onPointerUp={(event) => event.stopPropagation()}
     >
-      <div className="bm-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+      <div className="bm-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Book tickets">
 
         {/* Header */}
         <div className="bm-header">
           <div className="bm-header-left">
             {step !== 'movie' && (
-              <button className="bm-back-btn" onClick={goBack} aria-label="Go back">
-                ←
-              </button>
+              <button className="bm-back-btn" onClick={goBack} aria-label="Go back">← Back</button>
             )}
-            <div>
-              <p className="bm-kicker">BOX OFFICE</p>
-              <h2 className="bm-title">
-                {step === 'movie'    && 'Select a film'}
-                {step === 'showtime' && selectedMovie?.title}
-                {step === 'seats'    && 'Pick your seats'}
-                {step === 'confirm'  && 'Confirm booking'}
-              </h2>
-            </div>
           </div>
+          <h2 className="bm-title">
+            {step === 'movie'    && 'Select a film'}
+            {step === 'showtime' && selectedMovie?.title}
+            {step === 'seats'    && 'Pick your seats'}
+            {step === 'confirm'  && 'Confirm booking'}
+          </h2>
           <button className="bm-close-btn" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
         {/* Step indicator */}
-        <div className="bm-steps" aria-hidden="true">
-          {['Film', 'Time', 'Seats', 'Pay'].map((label, i) => (
-            <div
-              key={label}
-              className={`bm-step-dot ${i === stepIndex ? 'is-active' : ''} ${i < stepIndex ? 'is-done' : ''}`}
-            >
-              <span>{label}</span>
+        <div className="bm-steps" aria-label="Booking progress">
+          {['Film', 'Time', 'Seats', 'Confirm'].map((label, i) => (
+            <div key={label} className={`bm-step ${i <= stepIndex ? 'is-done' : ''} ${i === stepIndex ? 'is-active' : ''}`}>
+              <span className="bm-step-dot">{i < stepIndex ? '✓' : i + 1}</span>
+              <span className="bm-step-label">{label}</span>
             </div>
           ))}
         </div>
 
-        {/* Step content */}
+        {/* Body */}
         <div className="bm-body">
 
           {/* 1. Pick Movie */}
           {step === 'movie' && (
-            <div className="bm-movies-grid">
+            <ul className="bm-movie-list" role="list">
               {movies.map((m) => (
-                <button
-                  key={m.id}
-                  className={`bm-movie-card ${booking.movie === m.id ? 'is-selected' : ''}`}
-                  onClick={() => selectMovie(m.id)}
-                >
-                  <span className="bm-movie-genre">{m.genre}</span>
-                  <strong className="bm-movie-name">{m.title}</strong>
-                  <span className="bm-movie-meta">{m.duration} · {m.rating}</span>
-                </button>
+                <li key={m.id}>
+                  <button
+                    className={`bm-movie-card ${booking.movie === m.id ? 'is-selected' : ''}`}
+                    onClick={() => selectMovie(m.id)}
+                  >
+                    <div className="bm-movie-card-inner">
+                      <span className="bm-movie-title">{m.title}</span>
+                      <div className="bm-movie-meta">
+                        <span className="bm-badge">{m.genre}</span>
+                        <span className="bm-badge bm-badge-outline">{m.rating}</span>
+                        <span className="bm-movie-dur">{m.duration}</span>
+                      </div>
+                    </div>
+                    <span className="bm-movie-arrow">→</span>
+                  </button>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
 
           {/* 2. Pick Showtime */}
           {step === 'showtime' && (
-            <div className="bm-showtimes">
-              <p className="bm-section-label">Today's showtimes</p>
-              <div className="bm-times-grid">
+            <div>
+              <p className="bm-section-label">TODAY · GOODSHOW CINEMA</p>
+              <div className="bm-showtime-grid">
                 {showtimes.map((t) => (
                   <button
                     key={t}
-                    className={`bm-time-btn ${booking.showtime === t ? 'is-selected' : ''}`}
+                    className={`bm-showtime-btn ${booking.showtime === t ? 'is-selected' : ''}`}
                     onClick={() => selectShowtime(t)}
                   >
                     {t}
                   </button>
                 ))}
               </div>
-              <p className="bm-hint">All screens equipped with Dolby Atmos sound</p>
             </div>
           )}
 
           {/* 3. Pick Seats */}
           {step === 'seats' && (
-            <div className="bm-seats-wrap">
-              <div className="bm-screen-bar" aria-label="Screen direction">
-                <span>SCREEN THIS WAY</span>
-              </div>
-              <div className="bm-grid" role="group" aria-label="Seat map">
+            <div className="bm-seat-section">
+              <div className="bm-screen-label">SCREEN</div>
+              <div className="bm-seat-grid">
                 {ROWS.map((row) => (
-                  <div key={row} className="bm-row">
+                  <div key={row} className="bm-seat-row">
                     <span className="bm-row-label">{row}</span>
                     {Array.from({ length: COLS }, (_, c) => {
                       const seatId = `${row}${c + 1}`
