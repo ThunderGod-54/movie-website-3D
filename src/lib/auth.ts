@@ -32,3 +32,4 @@ export const useAuth = create<AuthState>((set) => ({
   },
 }))
 window.addEventListener('goodshow:logout', () => useAuth.getState().logout())
+if (typeof window !== 'undefined') (window as unknown as { __useAuth?: typeof useAuth }).__useAuth = useAuth

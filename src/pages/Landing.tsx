@@ -1,34 +1,12 @@
-import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { MoviePosterBurst } from '../components/MoviePosterBurst'
-import { SignInModal } from '../components/SignInModal'
-import AccountMenu from '../components/AccountMenu'
-import { useAuth } from '../lib/auth'
-import { useScrollActivation } from '../hooks/useDepthScroll'
+import { NavbarUserActions } from '../components/NavbarUserActions'
 import './Landing.css'
 import './LandingMotion.css'
 
 function Landing() {
-  const user = useAuth(s => s.user)
-  const isActivated = useScrollActivation()
-  const [isSignInOpen, setIsSignInOpen] = useState(false)
-  const [signInOriginRect, setSignInOriginRect] = useState<DOMRect | null>(null)
-  const signInBtnRef = useRef<HTMLButtonElement>(null)
-
-  const handleOpenSignIn = () => {
-    if (signInBtnRef.current) {
-      const rect = signInBtnRef.current.getBoundingClientRect()
-      setSignInOriginRect(rect)
-    }
-    setIsSignInOpen(true)
-  }
-
-  const handleCloseSignIn = () => {
-    setIsSignInOpen(false)
-  }
-
   return (
-    <div className={`landing-page ${isActivated ? 'is-activated' : 'is-initial'}`}>
+    <div className="landing-page">
       <header className="landing-header">
         <Link className="wordmark" to="/" aria-label="Goodshow home">
           <svg viewBox="0 0 42 42" aria-hidden="true">
@@ -37,37 +15,21 @@ function Landing() {
           <span>goodshow</span>
         </Link>
 
-        {/* Navigation items: About → Sign In → Enter Theater (post-scroll) */}
+        {/* Navigation items: About → Sign In / Profile */}
         <div className="landing-header-actions">
-          <a className="about-link" href="#about">About <span aria-hidden="true">↗</span></a>
-
-          {user ? <AccountMenu /> : <button
-            ref={signInBtnRef}
-            type="button"
-            className={`nav-signin-btn ${isSignInOpen ? 'is-emerging-origin' : ''}`}
-            onClick={handleOpenSignIn}
-            aria-haspopup="dialog"
-            aria-expanded={isSignInOpen}
-            aria-label="Sign In to Goodshow Cinema"
-          >
-            <span>Sign In</span>
-          </button>}
-
-          <Link
-            className={`header-enter-btn ${isActivated ? 'is-visible' : ''}`}
-            to="/lobby"
-            aria-label="Enter the theatre"
-            tabIndex={isActivated ? 0 : -1}
-          >
-            <span>Enter theatre</span>
-            <span aria-hidden="true">↗</span>
-          </Link>
+          <a className="about-link" href="#about">
+            About <span aria-hidden="true">↗</span>
+          </a>
+          <NavbarUserActions />
         </div>
       </header>
 
       <main className="landing-main">
+        {/* Soft translucent backdrop to ensure hero text & CTA remain distinct and readable */}
+        <div className="landing-hero-backdrop" aria-hidden="true" />
+
         <section
-          className={`landing-hero ${isActivated ? 'is-scrolling' : ''}`}
+          className="landing-hero"
           aria-labelledby="landing-title"
         >
           <p className="eyebrow">YOUR NEIGHBOURHOOD PICTURE HOUSE</p>
@@ -77,26 +39,16 @@ function Landing() {
             <span>Enter the theatre</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" /></svg>
           </Link>
-          <div className="hero-scroll-hint" aria-hidden="true">
-            <span>Scroll to explore</span>
-            <span className="scroll-hint-arrow">↓</span>
-          </div>
         </section>
 
-        <MoviePosterBurst isActivated={isActivated} isModalOpen={isSignInOpen} />
+        {/* Continuous background animation running right from page load */}
+        <MoviePosterBurst />
       </main>
 
-      <footer className={`landing-footer ${isActivated ? 'is-ambient' : ''}`} id="about">
+      <footer className="landing-footer" id="about">
         <p>Made for nights worth remembering</p>
         <small>A little movie magic, just for you.</small>
       </footer>
-
-      {/* Cinematic Sign In Modal */}
-      <SignInModal
-        isOpen={isSignInOpen && !user}
-        onClose={handleCloseSignIn}
-        originRect={signInOriginRect}
-      />
     </div>
   )
 }
