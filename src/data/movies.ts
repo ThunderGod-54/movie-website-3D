@@ -1,0 +1,133 @@
+export interface Movie {
+  id: string
+  title: string
+  genre: string
+  duration: string
+  rating: string
+  posterUrl: string
+  description: string
+  color: string
+}
+
+export const CINEMA_CATALOGUE: Movie[] = [
+  {
+    id: 'odyssey',
+    title: 'The Odyssey',
+    genre: 'Epic / Adventure',
+    duration: '2h 50m',
+    rating: 'U/A',
+    posterUrl: 'https://m.media-amazon.com/images/I/71qQXdOmSPL._AC_UF1000,1000_QL80_.jpg',
+    description: 'An ancient warrior embarks on a peril-filled journey home across mythic seas.',
+    color: '#3a4a6b',
+  },
+  {
+    id: 'spidey',
+    title: 'Spider-Man: Brand New Day',
+    genre: 'Action / Superhero',
+    duration: '2h 15m',
+    rating: 'U/A',
+    posterUrl: 'https://i.scdn.co/image/ab67616d0000b2733b4123d5765f3068a788fa30',
+    description: 'Peter Parker navigates a fractured city with a fresh slate and legendary threats.',
+    color: '#b02020',
+  },
+  {
+    id: 'f1',
+    title: 'F1',
+    genre: 'Drama / Sports',
+    duration: '2h 10m',
+    rating: 'U',
+    posterUrl: 'https://thumb.wikimedia.org/wikipedia/en/thumb/3/38/F1_%282025_film%29.png/250px-F1_%282025_film%29.png',
+    description: 'High-octane rivalry and redemption on the fastest motorsport circuits in the world.',
+    color: '#1a1a1a',
+  },
+  {
+    id: 'hailmary',
+    title: 'Project Hail Mary',
+    genre: 'Sci-Fi / Thriller',
+    duration: '2h 28m',
+    rating: 'U/A',
+    posterUrl: 'https://m.media-amazon.com/images/I/81o4R4G+xHL._UF1000,1000_QL80_.jpg',
+    description: 'A lone astronaut awakes with amnesia and the fate of humanity in his hands.',
+    color: '#1a3a5c',
+  },
+  {
+    id: 'dhura2',
+    title: 'Dhurandhar 2',
+    genre: 'Action / Espionage',
+    duration: '2h 35m',
+    rating: 'UA',
+    posterUrl: 'https://m.media-amazon.com/images/M/MV5BNzdkNjAxNWMtNWY3My00NTI1LTg2YWQtOGI3MDA0NzdhMjEyXkEyXkFqcGc@._V1_.jpg',
+    description: 'Covert operatives face off in an explosive international spy showdown.',
+    color: '#2a1a0a',
+  },
+  {
+    id: 'obsess',
+    title: 'Obsession',
+    genre: 'Psychological Thriller',
+    duration: '1h 58m',
+    rating: 'A',
+    posterUrl: 'https://thumb.wikimedia.org/wikipedia/en/thumb/0/05/Obsession_theatrical_poster.jpeg/250px-Obsession_theatrical_poster.jpeg',
+    description: 'A gripping web of deceit unravels when secrets from the past resurface.',
+    color: '#1a1a2e',
+  },
+  {
+    id: 'avatar',
+    title: 'Avatar: Fire and Ash',
+    genre: 'Sci-Fi / Adventure',
+    duration: '3h 10m',
+    rating: 'U/A',
+    posterUrl: 'https://resizing.flixster.com/Pq8B1yv0h4jocOwrukzjlvcdQDQ=/ems.cHJkLWVtcy1hc3NldHMvbW92aWVzLzRlNjBlZDhkLTg3NjItNDgzNy05OWYyLTE4ODI0MjBmMGU0OC5qcGc=',
+    description: 'Journey into the fiery volcanic regions of Pandora with unexpected tribes.',
+    color: '#173f4c',
+  },
+  {
+    id: 'demonslayer',
+    title: 'Demon Slayer: Infinity Castle',
+    genre: 'Anime / Action',
+    duration: '2h 05m',
+    rating: 'U/A',
+    posterUrl: 'https://m.media-amazon.com/images/M/MV5BOGQ3YWUzYjEtMTJiYy00ZjQ0LWI0YjktYjhiNGVhNGExYTM3XkEyXkFqcGc@._V1_.jpg',
+    description: 'The final, climactic battle commences in the labyrinthine Infinity Castle.',
+    color: '#251c37',
+  },
+  {
+    id: 'doomsday',
+    title: 'Avengers: Doomsday',
+    genre: 'Action / Comic',
+    duration: '2h 45m',
+    rating: 'U/A',
+    posterUrl: 'https://m.media-amazon.com/images/M/MV5BNGEwYWZkN2UtOTQ5Mi00MGQzLWEzNjYtMWMyNDBkMTkzMWNkXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg',
+    description: 'Earth’s mightiest heroes clash against multiversal annihilation.',
+    color: '#29272b',
+  },
+  {
+    id: 'fast',
+    title: 'Fast & Furious',
+    genre: 'Action / Race',
+    duration: '2h 12m',
+    rating: 'U/A',
+    posterUrl: 'https://upload.wikimedia.org/wikipedia/en/8/8f/Fast_and_Furious_Poster.jpg',
+    description: 'Street racers unite for one last dangerous high-speed heist.',
+    color: '#252525',
+  },
+  {
+    id: 'michael',
+    title: 'Michael',
+    genre: 'Biopic / Musical',
+    duration: '2h 30m',
+    rating: 'U',
+    posterUrl: 'https://resizing.flixster.com/hcHFyHYxNIIgMilY0mC2JoIhggk=/ems.cHJkLWVtcy1hc3NldHMvbW92aWVzL2JlYTIxNGM2LTkyZmEtNDJlMC05ODA4LWQ3YTBjYzE2MzQzNi5qcGc=',
+    description: 'The triumphant and complex musical life story of the King of Pop.',
+    color: '#30251f',
+  },
+  {
+    id: 'pacificrim',
+    title: 'Pacific Rim',
+    genre: 'Sci-Fi / Action',
+    duration: '2h 11m',
+    rating: 'U/A',
+    posterUrl: 'https://resizing.flixster.com/-XZAfHZM39UwaGJIFWKAE8fS0ak=/v3/t/assets/p9360990_p_v13_au.jpg',
+    description: 'Monstrous Kaiju rise from the sea, requiring colossal Jaeger mechs to fight back.',
+    color: '#172d3c',
+  },
+]

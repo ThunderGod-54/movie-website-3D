@@ -1,12 +1,13 @@
 import { Canvas } from '@react-three/fiber'
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import AccountMenu from '../components/AccountMenu'
 import { useApiList } from '../hooks/useApiList'
 import type { Movie } from '../lib/api'
 import BookingModal from '../components/BookingModal'
 import FoodModal from '../components/FoodModal'
 import LobbyScene from '../components/three/LobbyScene'
+import { NavbarUserActions } from '../components/NavbarUserActions'
+import { SearchModal } from '../components/SearchModal'
 import './Home.css'
 
 const stops = [
@@ -35,7 +36,20 @@ function Home() {
   const [menuOpen,   setMenuOpen]     = useState(false)
   const [bookingOpen, setBookingOpen] = useState(false)
   const [foodOpen,    setFoodOpen]    = useState(false)
-  const frameloop = menuOpen || bookingOpen || foodOpen ? 'demand' : 'always'
+  const [searchOpen,  setSearchOpen]  = useState(false)
+  const [selectedMovieForBooking, setSelectedMovieForBooking] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      ;(window as any).__openBookingWithId = (id: string) => {
+        setSelectedMovieForBooking(id)
+        setBookingOpen(true)
+      }
+    }
+  }, [])
+
+  const isAnyModalOpen = menuOpen || bookingOpen || foodOpen || searchOpen
+  const frameloop = isAnyModalOpen ? 'demand' : 'always'
 
   // FOOD_COURT is stop index 3
   function openFoodCourt() {
@@ -50,7 +64,7 @@ function Home() {
   const toggleMenu = useCallback(() => setMenuOpen((v) => !v), [])
 
   function moveStop(direction: number) {
-    if (insideAuditorium) return
+    if (insideAuditorium || isAnyModalOpen) return
     setActiveStop((c) => (c + direction + stops.length) % stops.length)
   }
 
@@ -61,6 +75,7 @@ function Home() {
   }
 
   function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (isAnyModalOpen) return
     const b = event.currentTarget.getBoundingClientRect()
     pointerRef.current = {
       x: ((event.clientX - b.left) / b.width) * 2 - 1,
@@ -69,18 +84,19 @@ function Home() {
   }
 
   function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    if (isAnyModalOpen) return
     if (event.pointerType === 'touch') gestureStartRef.current = event.clientX
   }
 
   function handlePointerUp(event: React.PointerEvent<HTMLDivElement>) {
-    if (gestureStartRef.current === null) return
+    if (isAnyModalOpen || gestureStartRef.current === null) return
     const distance = event.clientX - gestureStartRef.current
     gestureStartRef.current = null
     if (Math.abs(distance) > 55) moveStop(distance < 0 ? 1 : -1)
   }
 
   function handleWheel(event: React.WheelEvent<HTMLDivElement>) {
-    if (Math.abs(event.deltaY) <= 10 || wheelCooldownRef.current) return
+    if (isAnyModalOpen || Math.abs(event.deltaY) <= 10 || wheelCooldownRef.current) return
     wheelCooldownRef.current = true
     moveStop(event.deltaY > 0 ? 1 : -1)
     setTimeout(() => { wheelCooldownRef.current = false }, 500)
@@ -99,18 +115,37 @@ function Home() {
         <Link className="lobby-home-link" to="/" aria-label="Return to Goodshow home">
           <span aria-hidden="true">←</span> Goodshow
         </Link>
-        <div className="lobby-account"><button onClick={() => setBookingOpen(true)}>Book tickets</button><AccountMenu /></div>
-        <button
-          className="lobby-menu-btn"
-          type="button"
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={menuOpen}
-          onClick={toggleMenu}
-        >
-          <span className={`hamburger ${menuOpen ? 'is-open' : ''}`}>
-            <span /><span /><span />
-          </span>
-        </button>
+        <p className="lobby-header-note"><span aria-hidden="true">✳</span> THE PICTURE HOUSE</p>
+
+        <div className="lobby-header-right">
+          <button
+            className="lobby-search-btn"
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search movies"
+            title="Search movies in catalogue"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <span className="lobby-search-label">Search</span>
+          </button>
+
+          <NavbarUserActions />
+
+          <button
+            className="lobby-menu-btn"
+            type="button"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            onClick={toggleMenu}
+          >
+            <span className={`hamburger ${menuOpen ? 'is-open' : ''}`}>
+              <span /><span /><span />
+            </span>
+          </button>
+        </div>
       </header>
 
       {/* ── 3-D stage ──────────────────────────────────────────── */}
@@ -129,7 +164,10 @@ function Home() {
               movies={movies}
               activeStop={activeStop}
               pointerRef={pointerRef}
-              onTicketClick={() => setBookingOpen(true)}
+              onTicketClick={() => {
+                setSelectedMovieForBooking(null)
+                setBookingOpen(true)
+              }}
               onFoodClick={() => setFoodOpen(true)}
               onScreensClick={() => setInsideAuditorium(true)}
               insideAuditorium={insideAuditorium}
@@ -149,7 +187,16 @@ function Home() {
               {moviesError && <p role="alert">{moviesError} <button onClick={reloadMovies}>Retry</button></p>}
               {!moviesLoading && !moviesError && !movies.length && <p>No films are currently showing.</p>}
               {nowShowingMovies.map((movie, index) => (
-                <article className={`fallback-movie fallback-movie-${movie.color}`} key={movie.title}>
+                <article
+                  className={`fallback-movie fallback-movie-${movie.color}`}
+                  key={movie.title}
+                  onClick={() => {
+                    const matchedMovie = movies[index]
+                    setSelectedMovieForBooking(matchedMovie?._id || null)
+                    setBookingOpen(true)
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
                   <span className="fallback-movie-number">0{index + 1}</span>
                   <div><h2>{movie.title}</h2><p>{movie.meta}</p></div>
                   <span className="fallback-movie-mark" aria-hidden="true">✳</span>
@@ -207,7 +254,17 @@ function Home() {
             {moviesError && <p role="alert">{moviesError} <button onClick={reloadMovies}>Retry</button></p>}
             {!moviesLoading && !moviesError && !movies.length && <p>No films are currently showing.</p>}
             {nowShowingMovies.map((m, i) => (
-              <div className="fsm-movie" key={m.title}>
+              <div
+                className="fsm-movie"
+                key={m.title}
+                onClick={() => {
+                  const matchedMovie = movies[i]
+                  setSelectedMovieForBooking(matchedMovie?._id || null)
+                  setBookingOpen(true)
+                  setMenuOpen(false)
+                }}
+                style={{ cursor: 'pointer' }}
+              >
                 <span className="fsm-movie-num">0{i + 1}</span>
                 <div>
                   <p className="fsm-movie-title">{m.title}</p>
@@ -221,13 +278,29 @@ function Home() {
         </div>
 
       </div>
+
+      {/* ── Search modal ────────────────────────────────────────── */}
+      <SearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSelectMovie={(movie: Movie) => {
+          setSelectedMovieForBooking(movie._id)
+          setBookingOpen(true)
+        }}
+      />
+
       {/* ── Booking modal ───────────────────────────────────────── */}
       {bookingOpen && (
         <BookingModal
-          onClose={() => setBookingOpen(false)}
+          initialMovieId={selectedMovieForBooking || undefined}
+          onClose={() => {
+            setBookingOpen(false)
+            setSelectedMovieForBooking(null)
+          }}
           onGoToFood={openFoodCourt}
         />
       )}
+
       {/* ── Food modal ──────────────────────────────────────────── */}
       {foodOpen && <FoodModal onClose={() => setFoodOpen(false)} />}
     </main>

@@ -152,7 +152,27 @@ export default function BookingModal({ onClose, onGoToFood, initialMovieId, init
   const [receipt, setReceipt] = useState<Booking | null>(null)
   const [busy, setBusy] = useState(false)
   const [direct, setDirect] = useState(Boolean(initialMovieId && initialShowId))
+  const [unavailableNotice, setUnavailableNotice] = useState<string | null>(null)
   const close = () => { if (!busy) onClose() }
+  useEffect(() => {
+    if (initialMovieId && !movie) {
+      request<Movie[]>(`/movies?status=NOW_SHOWING`)
+        .then(({ data }) => {
+          const found = data.find(m => m._id === initialMovieId || m.title.toLowerCase().includes(initialMovieId.toLowerCase()))
+          if (found) {
+            setMovie(found)
+            setUnavailableNotice(null)
+          } else {
+            setMovie(null)
+            setUnavailableNotice('This film is currently unavailable or has finished its run. Please choose from our active screenings below.')
+          }
+        })
+        .catch(() => {
+          setMovie(null)
+          setUnavailableNotice('Unable to verify film availability. Please choose from our active screenings below.')
+        })
+    }
+  }, [initialMovieId, movie])
   useEffect(() => {
     const handler = (event: KeyboardEvent) => { if (event.key === 'Escape' && !busy && !document.querySelector('.signin-overlay')) onClose() }
     window.addEventListener('keydown', handler)
@@ -172,7 +192,23 @@ export default function BookingModal({ onClose, onGoToFood, initialMovieId, init
           <button className="bm-done-btn" onClick={onClose}>Done</button>
           <button className="bm-food-btn" onClick={() => { onClose(); onGoToFood() }}>Browse food menu</button>
         </div> : show || direct ? <SeatPicker key={show?._id || initialShowId} showId={show?._id || initialShowId!} movieId={movie?._id || initialMovieId!} onConfirmed={setReceipt} onBusy={setBusy} />
-          : movie ? <ShowPicker key={movie._id} movie={movie} onSelect={setShow} /> : <MoviePicker onSelect={setMovie} />}
+          : movie ? <ShowPicker key={movie._id} movie={movie} onSelect={setShow} /> : <>
+            {unavailableNotice && (
+              <div className="bm-unavailable-banner" role="alert">
+                <span className="bm-unavailable-icon" aria-hidden="true">⚠️</span>
+                <span className="bm-unavailable-text">{unavailableNotice}</span>
+                <button
+                  type="button"
+                  className="bm-unavailable-dismiss"
+                  onClick={() => setUnavailableNotice(null)}
+                  aria-label="Dismiss message"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            <MoviePicker onSelect={setMovie} />
+          </>}
       </div>
     </div>
   </div>

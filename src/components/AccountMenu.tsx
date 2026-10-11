@@ -9,7 +9,7 @@ import './BookingModal.css'
 import Ticket from './Ticket'
 import { pay, type Checkout } from '../lib/payment'
 
-function History({ onClose }: { onClose: () => void }) {
+export function History({ onClose }: { onClose: () => void }) {
   const user = useAuth(s => s.user)!
   const { items, loading, error, reload } = useApiList<Booking>('/bookings')
   const payments = useApiList<Checkout>('/payments')

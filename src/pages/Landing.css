@@ -167,42 +167,15 @@
   align-items: center;
   padding: 24px 24px 32px;
   text-align: center;
-  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
+  pointer-events: auto;
 }
 
-.landing-hero.is-faded {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transform: scale(1.08) translateY(-32px) !important;
-}
-
-.landing-hero.is-scrolling {
+.landing-hero-backdrop {
   position: absolute;
   inset: 0;
-  padding: 0;
+  z-index: 2;
   pointer-events: none;
-}
-
-.landing-hero.is-scrolling > :not(h1) {
-  visibility: hidden;
-}
-
-.landing-hero.is-scrolling h1 {
-  position: fixed;
-  z-index: 6;
-  top: clamp(100px, 15vh, 145px);
-  left: 0;
-  width: 100%;
-  color: #fff8e8;
-  font-size: clamp(44px, 6vw, 76px);
-  line-height: 0.9;
-  text-shadow: 0 3px 22px rgba(20, 14, 20, 0.75);
-  pointer-events: none;
-}
-
-.landing-hero.is-scrolling h1 span {
-  color: #f2a081;
+  background: radial-gradient(ellipse 65% 55% at 50% 48%, rgba(247, 244, 235, 0.76) 0%, rgba(247, 244, 235, 0.22) 65%, transparent 100%);
 }
 
 .eyebrow {
@@ -265,35 +238,6 @@
   stroke-width: 1.8;
 }
 
-.hero-scroll-hint {
-  margin-top: 28px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: #8c8578;
-  animation: gentle-bounce 2.2s ease-in-out infinite;
-  user-select: none;
-}
-
-.scroll-hint-arrow {
-  font-size: 13px;
-  color: var(--accent);
-}
-
-@keyframes gentle-bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(5px);
-  }
-}
-
 .landing-footer {
   width: min(100% - 64px, 1280px);
   display: flex;
@@ -336,6 +280,24 @@
     height: 64px;
   }
 
+  .landing-header-actions {
+    gap: 10px;
+  }
+
+  .header-enter-btn {
+    display: none;
+  }
+
+  .wordmark {
+    font-size: 24px;
+    gap: 7px;
+  }
+
+  .wordmark svg {
+    width: 30px;
+    height: 30px;
+  }
+
   .landing-hero {
     padding: 20px 18px 24px;
   }
@@ -372,8 +334,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .landing-hero,
-  .header-enter-btn,
-  .hero-scroll-hint {
+  .header-enter-btn {
     transition: none !important;
     animation: none !important;
   }
