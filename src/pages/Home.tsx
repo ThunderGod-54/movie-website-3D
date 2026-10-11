@@ -5,6 +5,7 @@ import { useApiList } from '../hooks/useApiList'
 import type { Movie } from '../lib/api'
 import BookingModal from '../components/BookingModal'
 import FoodModal from '../components/FoodModal'
+import TrailerModal, { type Trailer } from '../components/TrailerModal'
 import LobbyScene from '../components/three/LobbyScene'
 import { NavbarUserActions } from '../components/NavbarUserActions'
 import { SearchModal } from '../components/SearchModal'
@@ -37,6 +38,8 @@ function Home() {
   const [bookingOpen, setBookingOpen] = useState(false)
   const [foodOpen,    setFoodOpen]    = useState(false)
   const [searchOpen,  setSearchOpen]  = useState(false)
+  const [trailerPickerOpen, setTrailerPickerOpen] = useState(false)
+  const [selectedTrailer, setSelectedTrailer] = useState<Trailer | null>(null)
   const [selectedMovieForBooking, setSelectedMovieForBooking] = useState<string | null>(null)
 
   useEffect(() => {
@@ -48,7 +51,7 @@ function Home() {
     }
   }, [])
 
-  const isAnyModalOpen = menuOpen || bookingOpen || foodOpen || searchOpen
+  const isAnyModalOpen = menuOpen || bookingOpen || foodOpen || searchOpen || trailerPickerOpen || selectedTrailer !== null
   const frameloop = isAnyModalOpen ? 'demand' : 'always'
 
   // FOOD_COURT is stop index 3
@@ -171,6 +174,7 @@ function Home() {
               onFoodClick={() => setFoodOpen(true)}
               onScreensClick={() => setInsideAuditorium(true)}
               insideAuditorium={insideAuditorium}
+              trailerPlaying={selectedTrailer !== null}
             />
           </Canvas>
         )}
@@ -216,9 +220,46 @@ function Home() {
           </div>
         )}
         {insideAuditorium && (
-          <button className="auditorium-exit-btn" type="button" onClick={() => setInsideAuditorium(false)}>
+          <button
+            className="auditorium-exit-btn"
+            type="button"
+            onClick={() => {
+              setSelectedTrailer(null)
+              setInsideAuditorium(false)
+            }}
+          >
             ← Back to lobby
           </button>
+        )}
+        {insideAuditorium && !selectedTrailer && (
+          <button
+            className="auditorium-trailer-btn"
+            type="button"
+            onClick={() => setTrailerPickerOpen(true)}
+          >
+            <span aria-hidden="true">▶</span> View trailers
+          </button>
+        )}
+        {insideAuditorium && selectedTrailer && (
+          <>
+            <div className="auditorium-trailer-player">
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${selectedTrailer.videoId}?autoplay=1&playsinline=1&rel=0`}
+                title={`${selectedTrailer.title} trailer`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </div>
+            <button
+              className="auditorium-trailer-close"
+              type="button"
+              onClick={() => setSelectedTrailer(null)}
+              aria-label="Close trailer and return to the auditorium"
+            >
+              ×
+            </button>
+          </>
         )}
       </div>
 
@@ -288,6 +329,16 @@ function Home() {
           setBookingOpen(true)
         }}
       />
+
+      {trailerPickerOpen && (
+        <TrailerModal
+          onClose={() => setTrailerPickerOpen(false)}
+          onSelect={(trailer) => {
+            setSelectedTrailer(trailer)
+            setTrailerPickerOpen(false)
+          }}
+        />
+      )}
 
       {/* ── Booking modal ───────────────────────────────────────── */}
       {bookingOpen && (
