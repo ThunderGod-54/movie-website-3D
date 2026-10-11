@@ -1,0 +1,56 @@
+.route-transition {
+  min-height: 100svh;
+}
+
+.route-loader,
+.route-placeholder,
+.lobby-placeholder {
+  min-height: 100svh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 16px;
+  padding: 24px;
+  color: #23211e;
+  text-align: center;
+}
+
+.route-loader {
+  font-family: var(--hand);
+  font-size: 28px;
+}
+
+.route-placeholder p,
+.lobby-placeholder h1 {
+  max-width: 620px;
+  margin: 0;
+}
+
+.lobby-placeholder {
+  background: #f7f4eb;
+  font-family: var(--body);
+}
+
+.lobby-placeholder h1 {
+  font-family: var(--hand);
+  font-size: clamp(40px, 8vw, 76px);
+  line-height: 0.98;
+  font-weight: 500;
+}
+
+.lobby-placeholder a {
+  color: #23211e;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.lobby-placeholder-mark {
+  margin: 0;
+  color: #d65a3a;
+  font-size: 34px;
+}
+
+.account-actions, .lobby-account { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.account-actions > button, .lobby-account > button { border: 1px solid #54483b; border-radius: 20px; padding: 8px 14px; background: #fff9ed; color: #29251f; cursor: pointer; }
+.account-name { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 600px) { .account-name { display: none; } .lobby-account { gap: 4px; max-width: 240px; } .account-actions { gap: 4px; } }

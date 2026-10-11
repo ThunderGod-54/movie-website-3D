@@ -1,0 +1,407 @@
+/* ==========================================================================
+   Goodshow Cinema — Cinematic Sign-In Modal
+   Hand-drawn premium paper aesthetic with emergent transform mechanics
+   ========================================================================== */
+
+.signin-overlay {
+  --ink: #26231f;
+  --paper: #f7f4eb;
+  --accent: #d65a3a;
+  --hand: 'Caveat', cursive;
+  --body: 'DM Sans', sans-serif;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(28, 25, 22, 0.42);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow-y: auto;
+  pointer-events: auto;
+}
+
+.signin-modal-card {
+  position: relative;
+  width: min(430px, calc(100vw - 32px));
+  max-height: min(610px, calc(100svh - 48px));
+  overflow-y: auto;
+  background: #fffdf7;
+  border: 1.5px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 6px 8px 0 var(--ink), 0 24px 48px rgba(38, 35, 31, 0.2);
+  padding: 26px 26px 22px;
+  color: var(--ink);
+  font-family: var(--body);
+  transform-origin: center center;
+  will-change: transform, opacity;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(38, 35, 31, 0.2) transparent;
+  margin: auto;
+}
+
+/* Close Button */
+.signin-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(38, 35, 31, 0.3);
+  border-radius: 50%;
+  background: rgba(255, 253, 247, 0.85);
+  color: var(--ink);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  z-index: 10;
+}
+
+.signin-close-btn:hover {
+  background: var(--ink);
+  color: #fffdf7;
+}
+
+.signin-modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transform-origin: center center;
+  will-change: opacity, transform;
+}
+
+/* Movie Ticket Header Badge */
+.signin-ticket-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 7px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  color: var(--accent);
+  background: rgba(214, 90, 58, 0.08);
+  border: 1px dashed rgba(214, 90, 58, 0.55);
+  border-radius: 12px;
+  padding: 3px 10px;
+  margin-bottom: 8px;
+}
+
+.signin-title {
+  margin: 0 0 4px;
+  font-family: var(--hand);
+  font-size: clamp(30px, 5.5vw, 38px);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.signin-subtitle {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #696358;
+}
+
+/* Social Buttons */
+.signin-social-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.social-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 1.5px solid rgba(38, 35, 31, 0.32);
+  border-radius: 20px;
+  background: rgba(255, 253, 247, 0.8);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 1px 2px 0 rgba(38, 35, 31, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.social-btn:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 0.5px 1px 0 rgba(38, 35, 31, 0.3);
+  background: #fff;
+}
+
+.social-icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+/* Filmstrip Perforated Divider */
+.signin-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, #b0a99c 0 3px, transparent 3px 6px);
+}
+
+.divider-text {
+  font-size: 11px;
+  font-weight: 500;
+  color: #857e72;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.divider-dot {
+  color: var(--accent);
+  font-size: 10px;
+}
+
+/* Form Layout */
+.signin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.2px;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.forgot-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.forgot-link:hover {
+  color: #ba4728;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 12px;
+  display: grid;
+  place-items: center;
+  color: #8c8577;
+  pointer-events: none;
+}
+
+.form-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 14px 0 38px;
+  border: 1.5px solid rgba(38, 35, 31, 0.42);
+  border-radius: 10px;
+  background: #fffdf9;
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 13px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(214, 90, 58, 0.16);
+}
+
+.password-input {
+  padding-right: 38px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 6px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: #8c8577;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.15s ease;
+}
+
+.password-toggle-btn:hover {
+  color: var(--ink);
+}
+
+/* Remember Me Checkbox */
+.remember-row {
+  display: flex;
+  align-items: center;
+  margin-top: -2px;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: #555046;
+  cursor: pointer;
+  user-select: none;
+}
+
+.custom-checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* Feedback Notice */
+.signin-feedback-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 8px 12px;
+  background: rgba(214, 90, 58, 0.08);
+  border: 1px solid rgba(214, 90, 58, 0.35);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #8c3219;
+}
+
+.feedback-star {
+  color: var(--accent);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+/* Primary Submit Action */
+.signin-submit-btn {
+  min-height: 42px;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  padding: 0 20px 2px;
+  border: 1.5px solid var(--ink);
+  border-radius: 28px;
+  background: var(--accent);
+  color: #fffdf7;
+  font-family: var(--hand);
+  font-size: 20px;
+  font-weight: 700;
+  box-shadow: 2px 3px 0 var(--ink);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.signin-submit-btn:hover {
+  transform: translate(1px, 1.5px);
+  box-shadow: 1px 1.5px 0 var(--ink);
+  background: #e06242;
+}
+
+/* Footer Row */
+.signin-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 13px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(38, 35, 31, 0.14);
+  font-size: 12px;
+  color: #706a5f;
+  text-align: center;
+}
+
+.toggle-mode-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--ink);
+  font-weight: 700;
+  font-family: var(--body);
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.toggle-mode-btn:hover {
+  color: var(--accent);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive & Accessibility
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 480px) {
+  .signin-modal-card {
+    padding: 24px 20px 20px;
+    border-radius: 18px;
+  }
+
+  .signin-title {
+    font-size: 32px;
+  }
+
+  .signin-social-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signin-overlay,
+  .signin-modal-card,
+  .signin-modal-content,
+  .social-btn,
+  .signin-submit-btn {
+    transition: none !important;
+    animation: none !important;
+  }
+}
