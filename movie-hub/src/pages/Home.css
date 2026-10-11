@@ -85,9 +85,42 @@
   font-size: 13px;
 }
 
+/* ── Header Right Actions ── */
+.lobby-header-right {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 31;
+}
+
+.lobby-search-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(40, 38, 32, 0.22);
+  border-radius: 20px;
+  background: rgba(245, 236, 219, 0.6);
+  color: var(--lobby-ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 1px 1.5px 0 rgba(40, 38, 32, 0.15);
+  transition: all 150ms ease;
+}
+
+.lobby-search-btn:hover {
+  background: #fffdf7;
+  border-color: var(--lobby-ink);
+  color: var(--lobby-accent);
+}
+
 /* ── Hamburger ── */
 .lobby-menu-btn {
-  justify-self: end;
   display: grid;
   place-items: center;
   width: 42px;
@@ -457,6 +490,9 @@
   .lobby-header-note  { font-size: 7px; letter-spacing: 1px; }
   .lobby-home-link    { font-size: 23px; }
   .lobby-menu-btn     { width: 38px; height: 38px; }
+  .lobby-header-right { gap: 8px; }
+  .lobby-search-btn   { width: 38px; height: 38px; padding: 0; justify-content: center; border-radius: 50%; }
+  .lobby-search-label { display: none; }
 
   .lobby-scene-caption        { bottom: 28px; }
   .lobby-scene-caption strong { font-size: 32px; }

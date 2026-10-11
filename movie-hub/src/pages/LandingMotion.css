@@ -21,19 +21,17 @@
 	}
 }
 
-.landing-hero:not(.is-scrolling) > .eyebrow,
-.landing-hero:not(.is-scrolling) > h1,
-.landing-hero:not(.is-scrolling) > .hero-copy,
-.landing-hero:not(.is-scrolling) > .enter-button,
-.landing-hero:not(.is-scrolling) > .hero-scroll-hint {
+.landing-hero > .eyebrow,
+.landing-hero > h1,
+.landing-hero > .hero-copy,
+.landing-hero > .enter-button {
 	animation: depth-in 1.05s var(--depth-ease) backwards;
 }
 
-.landing-hero:not(.is-scrolling) > .eyebrow { animation-delay: 0.05s; }
-.landing-hero:not(.is-scrolling) > h1 { animation-delay: 0.16s; }
-.landing-hero:not(.is-scrolling) > .hero-copy { animation-delay: 0.32s; }
-.landing-hero:not(.is-scrolling) > .enter-button { animation-delay: 0.48s; }
-.landing-hero:not(.is-scrolling) > .hero-scroll-hint { animation-delay: 0.62s; }
+.landing-hero > .eyebrow { animation-delay: 0.05s; }
+.landing-hero > h1 { animation-delay: 0.16s; }
+.landing-hero > .hero-copy { animation-delay: 0.32s; }
+.landing-hero > .enter-button { animation-delay: 0.48s; }
 
 /* ---------------------------------------------------------------- *
  * Reduced motion accessibility

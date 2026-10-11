@@ -3,6 +3,8 @@ import { useRef, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import BookingModal from '../components/BookingModal'
 import FoodModal from '../components/FoodModal'
+import { NavbarUserActions } from '../components/NavbarUserActions'
+import { SearchModal } from '../components/SearchModal'
 import LobbyScene from '../components/three/LobbyScene'
 import './Home.css'
 
@@ -36,7 +38,11 @@ function Home() {
   const [menuOpen,   setMenuOpen]     = useState(false)
   const [bookingOpen, setBookingOpen] = useState(false)
   const [foodOpen,    setFoodOpen]    = useState(false)
-  const frameloop = menuOpen || bookingOpen || foodOpen ? 'demand' : 'always'
+  const [searchOpen,  setSearchOpen]  = useState(false)
+  const [selectedMovieForBooking, setSelectedMovieForBooking] = useState<string | null>(null)
+
+  const isAnyModalOpen = menuOpen || bookingOpen || foodOpen || searchOpen
+  const frameloop = isAnyModalOpen ? 'demand' : 'always'
 
   // FOOD_COURT is stop index 3
   function openFoodCourt() {
@@ -51,7 +57,7 @@ function Home() {
   const toggleMenu = useCallback(() => setMenuOpen((v) => !v), [])
 
   function moveStop(direction: number) {
-    if (insideAuditorium) return
+    if (insideAuditorium || isAnyModalOpen) return
     setActiveStop((c) => (c + direction + stops.length) % stops.length)
   }
 
@@ -61,27 +67,30 @@ function Home() {
     setMenuOpen(false)
   }
 
-  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
-    const b = event.currentTarget.getBoundingClientRect()
+  const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (isAnyModalOpen) return
+    const w = window.innerWidth || 1
+    const h = window.innerHeight || 1
     pointerRef.current = {
-      x: ((event.clientX - b.left) / b.width) * 2 - 1,
-      y: 1 - ((event.clientY - b.top) / b.height) * 2,
+      x: (event.clientX / w) * 2 - 1,
+      y: 1 - (event.clientY / h) * 2,
     }
-  }
+  }, [isAnyModalOpen])
 
   function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    if (isAnyModalOpen) return
     if (event.pointerType === 'touch') gestureStartRef.current = event.clientX
   }
 
   function handlePointerUp(event: React.PointerEvent<HTMLDivElement>) {
-    if (gestureStartRef.current === null) return
+    if (isAnyModalOpen || gestureStartRef.current === null) return
     const distance = event.clientX - gestureStartRef.current
     gestureStartRef.current = null
     if (Math.abs(distance) > 55) moveStop(distance < 0 ? 1 : -1)
   }
 
   function handleWheel(event: React.WheelEvent<HTMLDivElement>) {
-    if (Math.abs(event.deltaY) <= 10 || wheelCooldownRef.current) return
+    if (isAnyModalOpen || Math.abs(event.deltaY) <= 10 || wheelCooldownRef.current) return
     wheelCooldownRef.current = true
     moveStop(event.deltaY > 0 ? 1 : -1)
     setTimeout(() => { wheelCooldownRef.current = false }, 500)
@@ -101,17 +110,36 @@ function Home() {
           <span aria-hidden="true">←</span> Goodshow
         </Link>
         <p className="lobby-header-note"><span aria-hidden="true">✳</span> THE PICTURE HOUSE</p>
-        <button
-          className="lobby-menu-btn"
-          type="button"
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={menuOpen}
-          onClick={toggleMenu}
-        >
-          <span className={`hamburger ${menuOpen ? 'is-open' : ''}`}>
-            <span /><span /><span />
-          </span>
-        </button>
+
+        <div className="lobby-header-right">
+          <button
+            className="lobby-search-btn"
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search movies"
+            title="Search movies in catalogue"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <span className="lobby-search-label">Search</span>
+          </button>
+
+          <NavbarUserActions />
+
+          <button
+            className="lobby-menu-btn"
+            type="button"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            onClick={toggleMenu}
+          >
+            <span className={`hamburger ${menuOpen ? 'is-open' : ''}`}>
+              <span /><span /><span />
+            </span>
+          </button>
+        </div>
       </header>
 
       {/* ── 3-D stage ──────────────────────────────────────────── */}
@@ -129,7 +157,10 @@ function Home() {
             <LobbyScene
               activeStop={activeStop}
               pointerRef={pointerRef}
-              onTicketClick={() => setBookingOpen(true)}
+              onTicketClick={() => {
+                setSelectedMovieForBooking(null)
+                setBookingOpen(true)
+              }}
               onFoodClick={() => setFoodOpen(true)}
               onScreensClick={() => setInsideAuditorium(true)}
               insideAuditorium={insideAuditorium}
@@ -215,13 +246,29 @@ function Home() {
         </div>
 
       </div>
+
+      {/* ── Search modal ────────────────────────────────────────── */}
+      <SearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSelectMovie={(movie) => {
+          setSelectedMovieForBooking(movie.id)
+          setBookingOpen(true)
+        }}
+      />
+
       {/* ── Booking modal ───────────────────────────────────────── */}
       {bookingOpen && (
         <BookingModal
-          onClose={() => setBookingOpen(false)}
+          initialMovieId={selectedMovieForBooking}
+          onClose={() => {
+            setBookingOpen(false)
+            setSelectedMovieForBooking(null)
+          }}
           onGoToFood={openFoodCourt}
         />
       )}
+
       {/* ── Food modal ──────────────────────────────────────────── */}
       {foodOpen && <FoodModal onClose={() => setFoodOpen(false)} />}
     </main>

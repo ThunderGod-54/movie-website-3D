@@ -94,7 +94,7 @@ function createScreenTexture() {
 }
 
 function MovieScreen() {
-  const texture = useMemo(createScreenTexture, [])
+  const texture = useMemo(() => createScreenTexture(), [])
   useEffect(() => () => texture.dispose(), [texture])
 
   return (
