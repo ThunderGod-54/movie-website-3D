@@ -15,6 +15,7 @@ type LobbySceneProps = {
   onFoodClick: () => void
   onScreensClick: () => void
   insideAuditorium: boolean
+  trailerPlaying: boolean
 }
 
 const cameraPositions = [
@@ -677,11 +678,11 @@ function CameraRig({ activeStop, insideAuditorium, pointerRef }: Pick<LobbyScene
   return null
 }
 
-function LobbyScene({ movies, activeStop, insideAuditorium, pointerRef, onTicketClick, onFoodClick, onScreensClick }: LobbySceneProps) {
+function LobbyScene({ movies, activeStop, insideAuditorium, trailerPlaying, pointerRef, onTicketClick, onFoodClick, onScreensClick }: LobbySceneProps) {
   return (
     <>
       {insideAuditorium ? (
-        <Auditorium />
+        <Auditorium trailerPlaying={trailerPlaying} />
       ) : (
         <>
           <ambientLight intensity={1.7} />

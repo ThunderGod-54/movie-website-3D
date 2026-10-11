@@ -2,6 +2,10 @@ import { RoundedBox } from '@react-three/drei'
 import { useEffect, useMemo } from 'react'
 import { CanvasTexture, SRGBColorSpace } from 'three'
 
+type AuditoriumProps = {
+  trailerPlaying: boolean
+}
+
 function PremiumSeat({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
@@ -93,7 +97,7 @@ function createScreenTexture() {
   return texture
 }
 
-function MovieScreen() {
+function MovieScreen({ trailerPlaying }: AuditoriumProps) {
   const texture = useMemo(() => createScreenTexture(), [])
   useEffect(() => () => texture.dispose(), [texture])
 
@@ -105,18 +109,25 @@ function MovieScreen() {
       </mesh>
       <mesh position={[0, 5.15, 0.05]}>
         <planeGeometry args={[13.8, 7.55]} />
-        <meshBasicMaterial map={texture} />
+        {trailerPlaying
+          ? <meshBasicMaterial color="#080707" />
+          : <meshBasicMaterial map={texture} />}
       </mesh>
       <mesh position={[0, 9.3, 0.02]}>
         <boxGeometry args={[14.7, 0.18, 0.32]} />
         <meshToonMaterial color="#bd9b68" />
       </mesh>
-      <pointLight position={[0, 5.3, 1.3]} intensity={55} distance={15} color="#f5bd8a" />
+      <pointLight
+        position={[0, 5.3, 1.3]}
+        intensity={trailerPlaying ? 0 : 55}
+        distance={15}
+        color="#f5bd8a"
+      />
     </group>
   )
 }
 
-function SideWall({ side }: { side: -1 | 1 }) {
+function SideWall({ side, trailerPlaying }: { side: -1 | 1; trailerPlaying: boolean }) {
   return (
     <group position={[side * 8.8, 0, 0]}>
       <mesh position={[0, 5.3, 0]}>
@@ -133,7 +144,12 @@ function SideWall({ side }: { side: -1 | 1 }) {
             <boxGeometry args={[0.12, 0.18, 0.65]} />
             <meshToonMaterial color="#e5c48b" />
           </mesh>
-          <pointLight position={[-side * 0.6, 3.3, 0]} intensity={8} distance={5} color="#ffc982" />
+          <pointLight
+            position={[-side * 0.6, 3.3, 0]}
+            intensity={trailerPlaying ? 0.5 : 8}
+            distance={5}
+            color="#ffc982"
+          />
         </group>
       ))}
     </group>
@@ -177,13 +193,13 @@ function AuditoriumRows() {
   )
 }
 
-export default function Auditorium() {
+export default function Auditorium({ trailerPlaying }: AuditoriumProps) {
   return (
     <>
       <color attach="background" args={['#211b24']} />
-      <ambientLight intensity={0.85} />
-      <hemisphereLight args={['#e7c8ab', '#32202a', 1.05]} />
-      <directionalLight position={[-4, 9, 8]} intensity={1.35} />
+      <ambientLight intensity={trailerPlaying ? 0.12 : 0.85} />
+      <hemisphereLight args={['#e7c8ab', '#32202a', trailerPlaying ? 0.15 : 1.05]} />
+      <directionalLight position={[-4, 9, 8]} intensity={trailerPlaying ? 0.12 : 1.35} />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.03, 0]}>
         <planeGeometry args={[18, 28]} />
@@ -193,8 +209,8 @@ export default function Auditorium() {
         <boxGeometry args={[18, 0.3, 28]} />
         <meshToonMaterial color="#29232c" />
       </mesh>
-      <SideWall side={-1} />
-      <SideWall side={1} />
+      <SideWall side={-1} trailerPlaying={trailerPlaying} />
+      <SideWall side={1} trailerPlaying={trailerPlaying} />
 
       <mesh position={[0, 5.1, 13.8]}>
         <boxGeometry args={[18, 10.2, 0.35]} />
@@ -209,7 +225,7 @@ export default function Auditorium() {
         <meshToonMaterial color="#c8a36a" />
       </mesh>
 
-      <MovieScreen />
+      <MovieScreen trailerPlaying={trailerPlaying} />
       <AuditoriumRows />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
